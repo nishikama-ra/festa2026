@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 870" role="img" aria-labelledby="title desc"><title id="title">つながりフェスタ 会場マップ</title><desc id="desc">3D会場の配置を描き直した案内図。校舎、体育館、校庭、ブース、入口を表示。</desc><style>text{font-family:sans-serif;fill:#234a44} .label{font-size:13px;font-weight:bold;paint-order:stroke;stroke:#fffdf5;stroke-width:3px;stroke-linejoin:round} .id{font-size:9px;font-weight:bold;fill:white}</style><rect width="660" height="870" fill="#faf8f0"/><text x="32" y="32" font-size="23" font-weight="bold">つながりフェスタ　会場マップ</text><text x="32" y="53" font-size="12">3D会場の配置案から描き直した案内図</text><g transform="translate(25 35)">
+<polygon points="103,69 131,47 202,40 331,44 479,94 574,146 583,632 592,679 470,739 101,780 71,735 21,525 30,339 57,250 63,145 116,123 95,101" fill="#dce2d3" stroke="#9bad9b"/>
+<polygon points="64.0,146.0 147.0,146.0 175.0,83.0 286.0,78.0 382.0,92.0 491.0,128.0 575.0,167.0 575.0,300.0 470.0,302.0 469.0,412.0 430.0,431.0 425.0,407.0 260.0,408.0 223.0,418.0 170.0,413.0 99.0,420.0 98.0,388.0 66.0,388.0 64.0,350.0" fill="#e8d9b8" stroke="#9bad9b"/>
+<polygon points="171,90 281,77 395,95 452,128 458,179 436,190 330,190 281,174 245,151 176,150" fill="#b8cbb3" stroke="#9bad9b"/>
+<text class="label" x="252" y="124">モビリティー</text><text x="261" y="143" font-size="11">車両実走路</text>
+<rect x="95.4" y="436.56" width="234.11999999999998" height="53.160000000000025" fill="#bac7c1" stroke="#7e9690"/>
+<rect x="30.48" y="411.36" width="52.08" height="130.19999999999993" fill="#bac7c1" stroke="#7e9690"/>
+<rect x="67.32" y="389.4" width="28.080000000000013" height="47.160000000000025" fill="#bac7c1" stroke="#7e9690"/>
+<rect x="329.52" y="430.32" width="95.75999999999999" height="86.04000000000002" fill="#bac7c1" stroke="#7e9690"/>
+<rect x="307.92" y="489.72" width="21.599999999999966" height="26.639999999999986" fill="#bac7c1" stroke="#7e9690"/>
+<rect x="311.52" y="535.08" width="79.20000000000005" height="68.51999999999998" fill="#bac7c1" stroke="#7e9690"/>
+<rect x="103.44" y="608.28" width="297.6" height="57.82000000000005" fill="#bac7c1" stroke="#7e9690"/>
+<rect x="470" y="302" width="105" height="202" fill="#c8c1d1" stroke="#887993"/><text class="label" x="495" y="399">体育館</text><text class="label" x="191" y="468">校舎</text><text class="label" x="200" y="640">校舎</text><text class="label" x="322" y="563">昇降口</text><text class="label" x="319" y="582">正面玄関</text>
+<g transform="translate(-10 0)"><rect x="404" y="590" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="417" y="599" text-anchor="middle">F-1</text></g>
+<rect x="475" y="611" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="488" y="620" text-anchor="middle">F-2</text>
+<g transform="translate(-8 0)"><rect x="428" y="635" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="441" y="644" text-anchor="middle">F-3</text></g>
+<g transform="translate(-5 0)"><rect x="475" y="571" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="488" y="580" text-anchor="middle">F-4</text></g>
+<g transform="translate(-5 0)"><rect x="475" y="592" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="488" y="601" text-anchor="middle">F-5</text></g>
+<g transform="translate(-6 0)"><rect x="448" y="651" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="461" y="660" text-anchor="middle">F-6</text></g>
+<g transform="translate(-4 0)"><rect x="478" y="551" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="491" y="560" text-anchor="middle">F-7</text></g>
+<g transform="translate(-4 0)"><rect x="446" y="309" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="459" y="318" text-anchor="middle">F-8</text></g>
+<g transform="translate(-26 0)"><rect x="283" y="319" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="296" y="328" text-anchor="middle">F-9</text></g>
+<g transform="translate(-26 0)"><rect x="283" y="241" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="296" y="250" text-anchor="middle">F-10</text></g>
+<g transform="translate(-4 0)"><rect x="446" y="295" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="459" y="304" text-anchor="middle">F-11</text></g>
+<g transform="translate(-26 0)"><rect x="283" y="305" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="296" y="314" text-anchor="middle">F-12</text></g>
+<g transform="translate(-4 0)"><rect x="446" y="323" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="459" y="332" text-anchor="middle">F-13</text></g>
+<g transform="translate(-26 0)"><rect x="283" y="291" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="296" y="300" text-anchor="middle">F-14</text></g>
+<g transform="translate(-15 0)"><rect x="412" y="614" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="425" y="623" text-anchor="middle">F-15</text></g>
+<g transform="translate(-26 0)"><rect x="283" y="219" width="26" height="12" rx="2" fill="#385e76"/><text class="id" x="296" y="228" text-anchor="middle">S-1</text></g>
+<g transform="translate(-11 -8)"><circle cx="368.0" cy="198.0" r="3" fill="#385e76"/><text x="368.0" y="192.0" transform="rotate(-65 368.0 192.0)" font-size="9" font-weight="bold">S-2</text></g>
+<g transform="translate(-11 -8)"><circle cx="424.0" cy="198.0" r="3" fill="#385e76"/><text x="424.0" y="192.0" transform="rotate(-65 424.0 192.0)" font-size="9" font-weight="bold">S-3</text></g>
+<g transform="translate(-23 0)"><rect x="465" y="216" width="26" height="12" rx="2" fill="#385e76"/><text class="id" x="478" y="225" text-anchor="middle">S-4</text></g>
+<g transform="translate(-11 -8)"><circle cx="354.0" cy="198.0" r="3" fill="#385e76"/><text x="354.0" y="192.0" transform="rotate(-65 354.0 192.0)" font-size="9" font-weight="bold">S-5</text></g>
+<g transform="translate(-11 -8)"><circle cx="382.0" cy="198.0" r="3" fill="#385e76"/><text x="382.0" y="192.0" transform="rotate(-65 382.0 192.0)" font-size="9" font-weight="bold">S-6</text></g>
+<g transform="translate(-26 0)"><rect x="283" y="277" width="26" height="12" rx="2" fill="#385e76"/><text class="id" x="296" y="286" text-anchor="middle">S-7</text></g>
+<g transform="translate(-11 -8)"><circle cx="452.0" cy="198.0" r="3" fill="#385e76"/><text x="452.0" y="192.0" transform="rotate(-65 452.0 192.0)" font-size="9" font-weight="bold">S-8</text></g>
+<g transform="translate(-11 -8)"><circle cx="340.0" cy="198.0" r="3" fill="#385e76"/><text x="340.0" y="192.0" transform="rotate(-65 340.0 192.0)" font-size="9" font-weight="bold">S-9</text></g>
+<g transform="translate(-11 -8)"><circle cx="438.0" cy="198.0" r="3" fill="#385e76"/><text x="438.0" y="192.0" transform="rotate(-65 438.0 192.0)" font-size="9" font-weight="bold">S-10</text></g>
+<g transform="translate(-11 -8)"><circle cx="312.0" cy="198.0" r="3" fill="#385e76"/><text x="312.0" y="192.0" transform="rotate(-65 312.0 192.0)" font-size="9" font-weight="bold">S-11</text></g>
+<g transform="translate(-11 -8)"><circle cx="466.0" cy="198.0" r="3" fill="#385e76"/><text x="466.0" y="192.0" transform="rotate(-65 466.0 192.0)" font-size="9" font-weight="bold">S-12</text></g>
+<circle cx="326.0" cy="367.0" r="3" fill="#4e6c43"/><text x="326.0" y="361.0" transform="rotate(-65 326.0 361.0)" font-size="9" font-weight="bold">T-1</text>
+<g transform="translate(-23 0)"><rect x="465" y="272" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="478" y="281" text-anchor="middle">T-2</text></g>
+<g transform="translate(-23 0)"><rect x="465" y="258" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="478" y="267" text-anchor="middle">T-3</text></g>
+<g transform="translate(-11 -8)"><circle cx="410.0" cy="198.0" r="3" fill="#4e6c43"/><text x="410.0" y="192.0" transform="rotate(-65 410.0 192.0)" font-size="9" font-weight="bold">T-4</text></g>
+<rect x="165" y="246" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="178" y="255" text-anchor="middle">T-5</text>
+<g transform="translate(-11 -8)"><circle cx="326.0" cy="198.0" r="3" fill="#4e6c43"/><text x="326.0" y="192.0" transform="rotate(-65 326.0 192.0)" font-size="9" font-weight="bold">T-6</text></g>
+<circle cx="312.0" cy="367.0" r="3" fill="#4e6c43"/><text x="312.0" y="361.0" transform="rotate(-65 312.0 361.0)" font-size="9" font-weight="bold">T-7</text>
+<circle cx="298.0" cy="367.0" r="3" fill="#4e6c43"/><text x="298.0" y="361.0" transform="rotate(-65 298.0 361.0)" font-size="9" font-weight="bold">T-8</text>
+<circle cx="353.0" cy="367.0" r="3" fill="#4e6c43"/><text x="353.0" y="361.0" transform="rotate(-65 353.0 361.0)" font-size="9" font-weight="bold">T-9</text>
+<g transform="translate(-11 -8)"><circle cx="396.0" cy="198.0" r="3" fill="#4e6c43"/><text x="396.0" y="192.0" transform="rotate(-65 396.0 192.0)" font-size="9" font-weight="bold">T-10</text></g>
+<g transform="translate(-26 0)"><rect x="283" y="263" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="296" y="272" text-anchor="middle">T-12</text></g>
+<circle cx="340.0" cy="367.0" r="3" fill="#4e6c43"/><text x="340.0" y="361.0" transform="rotate(-65 340.0 361.0)" font-size="9" font-weight="bold">T-13</text>
+<g transform="translate(-23 0)"><rect x="465" y="245" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="478" y="254" text-anchor="middle">T-14</text></g>
+<rect x="137" y="64" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="150" y="73" text-anchor="middle">T-15</text>
+<circle cx="284.0" cy="367.0" r="3" fill="#4e6c43"/><text x="284.0" y="361.0" transform="rotate(-65 284.0 361.0)" font-size="9" font-weight="bold">T-16</text>
+<text class="label" x="74" y="100">西ヶ谷門</text>
+<text class="label" x="523" y="655">正門</text>
+<text class="label" x="332" y="239">屋外ステージ</text>
+<text class="label" x="335" y="282">イートイン1</text>
+<text class="label" x="360" y="371">本部</text>
+<text class="label" x="409" y="554">イートイン2</text>
+<text class="label" x="474" y="490">トイレ</text>
+</g><text x="34" y="840" font-size="12">飲食：F　物販・体験：S　地域・防災：T　｜　配置図と同じ向き</text></svg>
