@@ -134,7 +134,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  basin(251,414);basin(42,400);
  {let q=p(401,538),brick=mat('#ac7049',0,.94);details.cylinder([q[0],.12,q[1]],[q[0],.75,q[1]],1.25,1.25,brick,36);details.cylinder([q[0],.75,q[1]],[q[0],.82,q[1]],1.29,1.29,mat('#ada99a'),36);details.cylinder([q[0],.825,q[1]],[q[0],.84,q[1]],1.10,1.10,m.base,36);for(let i=0;i<24;i++){let a=i/24*TAU;details.cylinder([q[0]+1.252*Math.sin(a),.12,q[1]+1.252*Math.cos(a)],[q[0]+1.252*Math.sin(a),.74,q[1]+1.252*Math.cos(a)],.009,.009,mat('#d4b99a'),5);}for(let dx of [-.48,.48]){details.cylinder([q[0]+dx,.84,q[1]],[q[0]+dx,1.18,q[1]],.025,.025,m.metal,7);details.cylinder([q[0]+dx,1.18,q[1]],[q[0]+dx+.16,1.18,q[1]],.025,.025,m.metal,7);}}
 
- // Gym: open western entrances, no traversal through the walls or the closed permanent stage.
+ // Gym: the western entrances and central entrance are open; the waiting-room doors stay closed.
  const gx1=470,gx2=580,gz1=302,gz2=504;let ga=p(gx1,gz1),gb=p(gx2,gz2),gc=[(ga[0]+gb[0])/2,(ga[1]+gb[1])/2],gw=gb[0]-ga[0],gd=gb[1]-ga[1],hallEndZ=p(500,468)[1],gymRise=.45;
   const hallDepth=hallEndZ-ga[1],hallCenterZ=(ga[1]+hallEndZ)/2;
   one.box(gc[0],gymRise/2,gc[1],gw,gymRise,gd,mat('#b7b9b3',3,.94));
@@ -145,17 +145,89 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  one.box(gb[0],2.1,gc[1],.35,4.2,gd,m.wall);one.box(gb[0],8.38,gc[1],.35,.64,gd,m.wall);addBoxCollider(gb[0],gc[1],.4,gd,'体育館東壁');
   one.box(gc[0],4.35,ga[1],gw,8.7,.35,m.wall);addBoxCollider(gc[0],ga[1],gw,.4,'体育館壁');
   const southEntryX=ga[0]+gw*.38,southEntryHalf=2.25;
-  const southWallSegments=[[ga[0],southEntryX-southEntryHalf],[southEntryX+southEntryHalf,gb[0]]];
-  for(const [a,b] of southWallSegments)one.box((a+b)/2,2.1,gb[1],b-a,4.2,.35,m.wall);
+  const roomBottom=gymRise,roomWall=mat('#e1dfd5',3,.92);
+  // The room widths follow the relative positions in the performers' plan.
+  const smallEndX=ga[0]+gw*77/309,menStartX=ga[0]+gw*156/309;
+  const menEndX=ga[0]+gw*202/309,womenEndX=ga[0]+gw*233/309;
+  const menTopZ=hallEndZ+(gb[1]-hallEndZ)*27/66;
+  const smallDoorX=(ga[0]+smallEndX)/2,bigDoorX=(womenEndX+gb[0])/2,roomDoorHalf=1.1;
+  const gymDoorways=[
+   [smallDoorX-roomDoorHalf,smallDoorX+roomDoorHalf],
+   [southEntryX-southEntryHalf,southEntryX+southEntryHalf],
+   [bigDoorX-roomDoorHalf,bigDoorX+roomDoorHalf]
+  ];
+  const southWallSegments=[];let gymWallStart=ga[0];
+  for(const [a,b] of gymDoorways){if(a>gymWallStart)southWallSegments.push([gymWallStart,a]);gymWallStart=b;}
+  if(gymWallStart<gb[0])southWallSegments.push([gymWallStart,gb[0]]);
+  const southWindows=[
+   [ga[0]+2.0,ga[0]+3.5],
+   [menStartX+.8,menStartX+1.8],
+   [menEndX+.6,menEndX+1.55],
+   [womenEndX+1.7,womenEndX+3.2]
+  ];
+  const southOpenings=[southWindows[0],[southEntryX-southEntryHalf,southEntryX+southEntryHalf],...southWindows.slice(1)];
+  const outerWallSegments=[];let wallStart=ga[0];
+  for(const [a,b] of southOpenings){if(a>wallStart)outerWallSegments.push([wallStart,a]);wallStart=b;}
+  if(wallStart<gb[0])outerWallSegments.push([wallStart,gb[0]]);
+  for(const [a,b] of outerWallSegments){
+   one.box((a+b)/2,2.1,gb[1],b-a,4.2,.35,m.wall);
+   addBoxCollider((a+b)/2,gb[1],b-a,.4,'体育館南壁');
+  }
+  for(const [a,b] of southWindows){
+   const x=(a+b)/2,width=b-a;
+   one.box(x,.58,gb[1],width,1.16,.35,m.wall);
+   one.box(x,3.45,gb[1],width,1.5,.35,m.wall);
+   details.box(x,1.93,gb[1]+.045,width-.12,1.52,.055,windowMat('#aab9b7'));
+   addBoxCollider(x,gb[1],width,.4,'体育館南壁の窓');
+  }
   one.box(southEntryX,3.6,gb[1],southEntryHalf*2,1.2,.35,m.wall);
-  one.box(gc[0],6.45,gb[1],gw,4.5,.35,m.wall);addBoxCollider(gc[0],gb[1],gw,.4,'体育館壁');
+  one.box(gc[0],6.45,gb[1],gw,4.5,.35,m.wall);
   for(const [a,b] of southWallSegments){
    one.box((a+b)/2,2.1,hallEndZ,b-a,4.2,.35,m.wall);
    addBoxCollider((a+b)/2,hallEndZ,b-a,.4,'体育館床の出口側の壁');
   }
+  const roomDoor=mat('#f4f3ed',0,.62,.08),roomDoorFrame=mat('#e2e2da',0,.54,.24);
+  for(const x of [smallDoorX,bigDoorX]){
+   one.box(x,3.6,hallEndZ,roomDoorHalf*2,1.2,.35,m.wall);
+   one.box(x,1.51,hallEndZ-.095,roomDoorHalf*2-.12,3.02,.11,roomDoor);
+   details.box(x,1.52,hallEndZ-.17,roomDoorHalf*2+.06,3.1,.045,roomDoorFrame);
+   details.box(x,1.52,hallEndZ-.205,roomDoorHalf*2-.12,2.98,.025,roomDoor);
+   details.box(x+(x<gc[0]?.78:-.78),1.40,hallEndZ-.24,.025,.23,.05,m.metal);
+   addBoxCollider(x,hallEndZ,roomDoorHalf*2,.4,'出演者控室の閉じた扉');
+  }
   one.box(southEntryX,3.6,hallEndZ,southEntryHalf*2,1.2,.35,m.wall);
-  one.box(gc[0],6.45,hallEndZ,gw,4.5,.35,m.wall);
-  addBoxCollider(southEntryX,hallEndZ,southEntryHalf*2,.4,'体育館の閉じた扉');
+  one.box(gc[0],6.37,hallEndZ,gw,4.34,.35,m.wall);
+  one.tri([ga[0],8.54,hallEndZ],[gc[0],9.97,hallEndZ],[gb[0],8.54,hallEndZ],m.wall);
+  function roomWallX(x,z0,z1){
+   one.box(x,roomBottom+1.6,(z0+z1)/2,.16,3.2,z1-z0,roomWall);
+   addBoxCollider(x,(z0+z1)/2,.18,z1-z0,'体育館前室の壁');
+  }
+  function roomWallZ(x0,x1,z){
+   one.box((x0+x1)/2,roomBottom+1.6,z,x1-x0,3.2,.16,roomWall);
+   addBoxCollider((x0+x1)/2,z,x1-x0,.18,'体育館前室の壁');
+  }
+  roomWallX(smallEndX,hallEndZ+.22,gb[1]);
+  roomWallX(menStartX,menTopZ,gb[1]);
+  roomWallX(menEndX,hallEndZ+.22,gb[1]);
+  roomWallX(womenEndX,hallEndZ+.22,gb[1]);
+  roomWallZ(menStartX,menEndX,menTopZ);
+  // The two shoe racks stand on the sides of the entrance in the plan.
+  const shelf=mat('#a69b86',0,.82),shelfZ=(menTopZ+gb[1])/2,shelfDepth=gb[1]-menTopZ-.55;
+  for(const x of [smallEndX+.36,menStartX-.48]){
+   for(const y of [.28,.7,1.12])details.box(x,gymRise+y,shelfZ,.56,.07,shelfDepth,shelf);
+   for(const side of [-1,1])details.box(x+side*.27,gymRise+.7,shelfZ,.045,1.1,shelfDepth,shelf);
+   addBoxCollider(x,shelfZ,.56,shelfDepth,'下駄箱');
+  }
+  const roomNames=[
+   ['出演者控室（小）',(ga[0]+smallEndX)/2],
+   ['WC（M）',(menStartX+menEndX)/2],
+   ['WC（W）',(menEndX+womenEndX)/2],
+   ['出演者控室（大）',(womenEndX+gb[0])/2]
+  ];
+  roomNames.forEach(([name,x],i)=>{
+   const layer=atlas.add('gym-room-'+i,(c,s)=>{c.fillStyle='#f5f3eb';c.fillRect(0,0,s,s);c.fillStyle='#273b39';c.textAlign='center';if(i===0||i===3){c.font='700 78px sans-serif';c.fillText('出演者控室',s/2,218);c.font='700 100px sans-serif';c.fillText(i===0?'（小）':'（大）',s/2,350);}else{c.font='700 112px sans-serif';c.fillText(name,s/2,296);}});
+   signGeo.scope(M.compose(x,0,gb[1]-.24,Math.PI),()=>{signGeo.sign(0,3.35,0,i===0||i===3?2.2:1.35,.36,layer,true);});
+  });
  const westOpenings=[[335,344],[421,433],[468,484]];
  let westSegments=[[302,335],[344,421],[433,468],[484,504]];
  for(let [a,b] of westSegments){let qa=p(gx1,a),qb=p(gx1,b);one.box(ga[0],2.1,(qa[1]+qb[1])/2,.36,4.2,qb[1]-qa[1],m.wall);addBoxCollider(ga[0],(qa[1]+qb[1])/2,.4,qb[1]-qa[1],'体育館西壁');}
@@ -190,17 +262,21 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
     details.box(ga[0]+.205,3.49,(za+zb)/2,.035,1.42,zb-za,insideWood);
    }
    const southInsideZ=hallEndZ-.205;
-   for(const [a,b] of southWallSegments){
-    details.box((a+b)/2,2.1,southInsideZ,b-a-.06,4.04,.035,insideWood);
-    for(let x=a+.38;x<b-.2;x+=.53)details.box(x,2.1,southInsideZ-.028,.022,3.96,.02,insideTrim);
+   for(const [a,b] of southWallSegments)
+    details.box((a+b)/2,1.55,southInsideZ,b-a,2.94,.035,insideWood);
+   details.box(gc[0],3.57,southInsideZ,gw,1.1,.035,insideWood);
+   for(let x=ga[0]+.38;x<gb[0]-.2;x+=.53){
+    const aboveDoor=gymDoorways.some(([a,b])=>x>=a&&x<=b);
+    details.box(x,aboveDoor?3.57:2.1,southInsideZ-.028,.022,aboveDoor?1.02:3.96,.02,insideTrim);
    }
-   details.box(southEntryX,3.59,southInsideZ,4.46,1.14,.035,insideWood);
    const southFrame=mat('#e6e2d8',0,.76),southGlass=mat('#24775f',0,.74,.04);
    for(const side of [-1,1])details.box(southEntryX+side*2.25,1.52,southInsideZ-.04,.11,3.04,.09,southFrame);
    details.box(southEntryX,3.02,southInsideZ-.04,4.6,.12,.09,southFrame);
-   one.box(southEntryX,1.5,hallEndZ-.08,4.32,2.94,.16,mat('#aa8769',0,.82));
-   details.box(southEntryX,1.5,southInsideZ-.09,.045,2.9,.04,insideTrim);
-   for(const side of [-1,1])details.box(southEntryX+side*.16,1.34,southInsideZ-.12,.035,.28,.07,m.metal);
+   const openDoor=mat('#f4f3ed',0,.64,.08);
+   for(const side of [-1,1]){
+    details.box(southEntryX+side*(southEntryHalf-.11),1.51,hallEndZ+.67,.08,2.98,1.28,openDoor);
+    details.box(southEntryX+side*(southEntryHalf-.17),1.44,hallEndZ+.25,.035,.27,.05,m.metal);
+   }
    for(const dx of [-4.8,0,4.8]){
     const x=gc[0]+dx;
     details.box(x,6.0,southInsideZ-.02,1.35,2.4,.05,southFrame);
@@ -222,24 +298,27 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
   const portalZ=ga[1]+4.03,curtainZ=ga[1]+2.14;
   for(const side of [-1,1]){
    const width=gw/2-6.12,x=gc[0]+side*(6.12+width/2);
-   details.box(x,2.1,ga[1]+.21,width,4.16,.05,insideWood);
-   for(let px=x-width/2+.36;px<x+width/2;px+=.50)details.box(px,2.1,ga[1]+.25,.023,4.08,.026,insideTrim);
+   one.box(x,4.35,portalZ,width,8.7,.35,m.wall);
+   addBoxCollider(x,portalZ,width,.4,'体育館壁');
+   details.box(x,2.1,portalZ+.21,width,4.16,.05,insideWood);
+   for(let px=x-width/2+.36;px<x+width/2;px+=.50)details.box(px,2.1,portalZ+.25,.023,4.08,.026,insideTrim);
   }
+  one.box(gc[0],8.2,portalZ,12.24,1.0,.35,m.wall);
   one.box(gc[0],gymRise+.55,ga[1]+2.1,11,1.1,4.0,mat('#aa7649',gymFloor,.52));addBoxCollider(gc[0],ga[1]+2.1,11,4.2,'常設舞台・使用せず');
   details.box(gc[0],3.81,curtainZ,11.2,5.46,.11,curtain);
   for(let i=0;i<32;i++){let x=gc[0]-5.42+i*.35;details.cylinder([x,1.10,curtainZ+.08],[x,6.49,curtainZ+.08],.075,.075,mat(i%3?'#421925':'#572331',6,.96),7);}
   for(const y of [1.10,6.48])details.box(gc[0],y,curtainZ+.17,11.18,.085,.10,gold);
   for(const side of [-1,1]){
-   details.box(gc[0]+side*5.86,4.05,portalZ,.73,6.89,.69,stageFrame);
+   details.box(gc[0]+side*5.86,4.05,portalZ,.73,6.89,.45,stageFrame);
    details.box(gc[0]+side*5.49,3.79,(curtainZ+portalZ)/2,.22,5.95,portalZ-curtainZ,stageFrame);
   }
-  details.box(gc[0],7.46,portalZ,12.45,.66,.72,stageFrame);
-  details.box(gc[0],6.89,portalZ+.39,11.12,.55,.07,mat('#4a1a28',0,.94));
-  details.quad([gc[0],7.24,portalZ+.44],[gc[0]-.25,6.97,portalZ+.44],[gc[0],6.70,portalZ+.44],[gc[0]+.25,6.97,portalZ+.44],gold);
-  details.box(gc[0],1.01,portalZ+.45,11.1,.73,.33,insideWood);
-  for(const side of [-1,1])details.box(gc[0]+side*8.25,2.55,ga[1]+.29,3.2,.92,.06,insideWood);
-  signGeo.sign(gc[0]-8.25,2.55,ga[1]+.34,3.0,.62,closedStage);
-  signGeo.sign(gc[0]+8.25,2.55,ga[1]+.34,3.0,.62,gymTitle);
+  details.box(gc[0],7.46,portalZ,12.45,.66,.45,stageFrame);
+  details.box(gc[0],6.89,portalZ+.23,11.12,.55,.07,mat('#4a1a28',0,.94));
+  details.quad([gc[0],7.24,portalZ+.28],[gc[0]-.25,6.97,portalZ+.28],[gc[0],6.70,portalZ+.28],[gc[0]+.25,6.97,portalZ+.28],gold);
+  details.box(gc[0],1.0,portalZ+.11,11.1,1.1,.15,insideWood);
+  for(const side of [-1,1])details.box(gc[0]+side*8.25,2.55,portalZ+.29,3.2,.92,.06,insideWood);
+  signGeo.sign(gc[0]-8.25,2.55,portalZ+.34,3.0,.62,closedStage);
+  signGeo.sign(gc[0]+8.25,2.55,portalZ+.34,3.0,.62,gymTitle);
    // The long white perforated boards follow the photographs; no original exhibits are reproduced.
    {const wallX=gb[0]-.25,board=mat('#ffffff',gymDisplayBoard,.91);for(let panel=0;panel<5;panel++){
     const wallZ=ga[1]+8.3+panel*5.45;
@@ -523,7 +602,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  }
  function nearestWalkable(q,max=10){if(isWalkable(q[0],q[1],.31))return [...q];for(let r=.4;r<=max;r+=.35)for(let i=0;i<32;i++){let a=i*TAU/32,x=q[0]+Math.sin(a)*r,z=q[1]+Math.cos(a)*r;if(isWalkable(x,z,.31))return[x,z];}return null;}
  const gym=data.locations.find(r=>r.id==='GYM');gym.approach=[gc[0],ga[1]+18.8];gym.marker=[gc[0],3.1+gymRise,ga[1]+18.8];markers.push(gym);
- for(let r of markers){if(r.id==='WC')r.approach=[gc[0],gb[1]-5.0];r.approach=nearestWalkable(r.approach)||nearestWalkable(r.pos);}
+ for(let r of markers){if(r.id==='WC')r.approach=[(menStartX+womenEndX)/2,gb[1]+5.5];r.approach=nearestWalkable(r.approach)||nearestWalkable(r.pos);}
  progress(.62,'来場者・ヤギ・試乗車の動きを準備しています');
  function human(variant=0){let g=new Geometry(),shirt=mat(['#7f9c9a','#d8c5ad','#a76250','#4c6670','#787c58','#b7b4a9','#655c73','#e3d1b1'][variant%8],6,.93),pants=mat(['#41494e','#746854','#4a575a','#485669'][variant%4],6,.91),skin=mat(['#cba584','#d8b69a','#bc9879','#d0ad8c'][variant%4],0,.78),hair=mat(['#383733','#4b4137','#77756e'][variant%3],0,.96);
   // Contoured torso plus separate collar, cuffs and shoes avoid faceless capsule bodies.
