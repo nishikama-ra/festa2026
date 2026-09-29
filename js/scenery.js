@@ -76,33 +76,38 @@ window.FestaScenery = {
   rail([ga[0]-stairWidth,terraceY,lowerZ],[ga[0]-stairWidth,terraceY,lowerZ+1.3]);
   for(const x of [ga[0]-stairWidth+.25,ga[0]+2.2,gc[0]+4.4,gb[0]-.25])details.box(x,(terraceY-.28)/2,lowerZ+.99,.42,terraceY-.28,.45,paint);
   details.box((gc[0]+4.3+gb[0])/2,terraceY+.46,lowerZ+1.17,gb[0]-gc[0]-4.3,.92,.22,paint);
-  const glazing=mat('#778885',0,.48,.08),frame=mat('#c3c5b9',0,.63,.18);
+  const glazing=mat('#778885',0,.48,.08),frame=mat('#c3c5b9',0,.63,.18),entryFrame=mat('#414c4e',0,.48,.62);
   for(const dx of [-6.8,-2.3,2.3,6.8]){
    details.box(gc[0]+dx,6.0,gb[1]+.20,1.35,2.4,.09,frame);
    details.box(gc[0]+dx,5.96,gb[1]+.26,1.21,2.22,.03,glazing);
    details.box(gc[0]+dx,6.75,gb[1]+.29,1.22,.67,.05,paint);
    details.box(gc[0]+dx,5.52,gb[1]+.30,1.22,.045,.04,frame);
   }
-  // V6 places the southern entrance about 38% of the way from west to east.
-  // The two end openings in the photo are windows, not the main doors.
-  for(const x of [ga[0]+2.7,gb[0]-3.4]){
-   details.box(x,1.75,gb[1]+.21,1.42,1.45,.08,frame);
-   details.box(x,1.75,gb[1]+.26,1.28,1.31,.035,glazing);
-   details.box(x,1.75,gb[1]+.30,.045,1.31,.05,frame);
-   details.box(x,1.01,gb[1]+.33,1.55,.08,.22,paint);
+  // The waiting rooms and WC have windows on the southern exterior wall.
+  const smallEndX=ga[0]+gw*77/309,menStartX=ga[0]+gw*156/309;
+  const menEndX=ga[0]+gw*202/309,womenEndX=ga[0]+gw*233/309;
+  for(const [x,w] of [
+   [ga[0]+2.75,1.5],[menStartX+1.3,1.0],
+   [menEndX+1.075,.95],[womenEndX+2.45,1.5]
+  ]){
+   details.box(x,1.93,gb[1]+.24,w+.12,1.62,.065,entryFrame);
+   details.box(x,1.93,gb[1]+.28,w-.08,1.45,.025,glazing);
+   details.box(x,1.93,gb[1]+.31,.045,1.51,.045,entryFrame);
+   details.box(x,1.93,gb[1]+.32,w+.15,.045,.045,entryFrame);
   }
   const entryX=ga[0]+gw*.38,entryZ=gb[1]+.27;
-  details.box(entryX,1.54,entryZ,4.5,2.76,.08,mat('#27332f',0,.91));
-  for(let i=0;i<4;i++){
-   const x=entryX+(i-1.5)*1.10;
+  // The central entrance opens to the exterior landing and stairs.
+  for(const side of [-1,1]){
+   const x=entryX+side*1.65;
    details.box(x,1.45,entryZ+.055,1.04,2.35,.035,glazing);
-   details.box(x-.55,1.54,entryZ+.09,.055,2.76,.055,frame);
-   details.box(x,1.06,entryZ+.09,1.10,.045,.06,frame);
-   details.box(x,2.49,entryZ+.09,1.10,.045,.06,frame);
-   details.box(x+(i%2?-.42:.42),1.30,entryZ+.14,.03,.30,.05,frame);
+   details.box(x,1.06,entryZ+.09,1.10,.045,.06,entryFrame);
+   details.box(x,2.49,entryZ+.09,1.10,.045,.06,entryFrame);
+   details.box(entryX+side*2.2,1.54,entryZ+.09,.055,2.76,.055,entryFrame);
+   details.box(entryX+side*1.1,1.54,entryZ+.09,.055,2.76,.055,entryFrame);
+   details.box(entryX+side*1.1,1.45,entryZ-.5,.035,2.35,1.04,glazing);
+   details.box(entryX+side*1.1,1.06,entryZ-.5,.05,.045,1.08,entryFrame);
   }
-  details.box(entryX+2.2,1.54,entryZ+.09,.055,2.76,.055,frame);
-  details.box(entryX,2.91,entryZ+.09,4.5,.06,.06,frame);
+  details.box(entryX,2.91,entryZ+.09,4.5,.06,.06,entryFrame);
   details.box(entryX,.15,gb[1]+1.75,5.6,.30,3.0,paint);
   for(let i=0;i<3;i++)details.box(entryX,.025+i*.05,gb[1]+4.06-i*.38,5.6,.05+i*.10,.40,paint);
   // The field-facing blue doors stand open beside their concrete steps.
