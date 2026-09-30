@@ -27,7 +27,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  const schoolSign=atlas.banner('西鎌倉','鎌倉市立西鎌倉小学校','つながりフェスタ＠にしかま2026','#415d60');
  const mainWelcome=atlas.banner('2026','つながりフェスタ＠にしかま','つながる、みつかる、すきになる','#356064');
  const warningSign=atlas.sign('走行エリア','モビリティー','実走路の中へは入れません。\n見学は柵の外側から。','#a74d38','車両実走路');
- const closedStage=atlas.banner('常設舞台','壇上舞台　使用せず','配置図に基づく表示','#695a51');
+
   const gymTitle=atlas.banner('P','みんなの舞台','体育館内・開始予定','#83533c');
  const scheduleTex=atlas.add('schedule',(c,s)=>{c.fillStyle='#fff9ec';c.fillRect(0,0,s,s);c.fillStyle='#5b3e32';c.font='700 29px sans-serif';c.fillText('体育館内 開始予定',24,42);c.font='17px sans-serif';c.fillText('終了時刻は未確認　／　当日変更の可能性あり',24,70);data.schedule.forEach((a,i)=>{let y=112+i*36;c.fillStyle=i%2?'#ffffff':'#f2ebde';c.fillRect(14,y-24,484,34);c.fillStyle='#83533c';c.font='700 20px sans-serif';c.fillText(a.time,23,y);c.fillStyle='#263b38';let fs=18;c.font=`${fs}px sans-serif`;let tx=a.name;while(c.measureText(tx).width>370&&fs>10)c.font=`${--fs}px sans-serif`;c.fillText(tx,100,y);});});
  const entryPanel=atlas.add('Entrance panels',(c,s)=>{const rand=rng(451);c.fillStyle='#33363b';c.fillRect(0,0,s,s);for(let y=0;y<s;y+=5)for(let x=0;x<s;x+=12){let n=40+rand()*25;c.fillStyle=`rgb(${n},${n+1},${n+5})`;c.fillRect(x+(y%10?6:0),y,10,3);}});
@@ -317,7 +317,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
   details.quad([gc[0],7.24,portalZ+.28],[gc[0]-.25,6.97,portalZ+.28],[gc[0],6.70,portalZ+.28],[gc[0]+.25,6.97,portalZ+.28],gold);
   details.box(gc[0],1.0,portalZ+.11,11.1,1.1,.15,insideWood);
   for(const side of [-1,1])details.box(gc[0]+side*8.25,2.55,portalZ+.29,3.2,.92,.06,insideWood);
-  signGeo.sign(gc[0]-8.25,2.55,portalZ+.34,3.0,.62,closedStage);
+
   signGeo.sign(gc[0]+8.25,2.55,portalZ+.34,3.0,.62,gymTitle);
    // The long white perforated boards follow the photographs; no original exhibits are reproduced.
    {const wallX=gb[0]-.25,board=mat('#ffffff',gymDisplayBoard,.91);for(let panel=0;panel<5;panel++){
@@ -430,7 +430,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  signGeo.sign(st[0],.34,st[1]+.914,6.75,.5,signFor.OUTSTAGE.banner);
  os.approach=[st[0],st[1]+3.2];os.marker=[st[0],2.1,st[1]];markers.push(os);
  // Direction / information board at the south end of the field.
- for(let rec of data.locations.filter(r=>['MEET','EAT2','WC'].includes(r.id))){rec.approach=rec.pos;rec.marker=[rec.pos[0],2.5,rec.pos[1]];markers.push(rec);if(rec.id==='WC'){signGeo.scope(M.compose(rec.pos[0],0,rec.pos[1],0),()=>{signGeo.sign(0,2.4,0,2.2,.53,signFor.WC.banner);});}}
+ for(let rec of data.locations.filter(r=>['MEET','EAT2','WC'].includes(r.id))){rec.approach=rec.pos;rec.marker=[rec.pos[0],2.5,rec.pos[1]];markers.push(rec);if(rec.id==='WC'){signGeo.scope(M.compose(rec.pos[0],0,rec.pos[1],0),()=>{signGeo.sign(0,2.4,0,2.2,.53,atlas.banner('WC','体育館南側・トイレ','当日のトイレ',categoryColors.I));});}}
  progress(.45,'木々・遊具・モビリティ走路を作っています');
  // Mobility trial loop is registered to the northern drawing, rather than laid over booth space.
  const controlPx=[[192,116],[225,94],[306,91],[391,108],[436,132],[443,164],[423,178],[350,179],[294,162],[252,141],[209,143]];
@@ -449,7 +449,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  function sampleTrack(distance){let d=((distance%trackLength)+trackLength)%trackLength,idx=0;while(idx<track.length-1&&trackDistances[idx+1]<d)idx++;let a=track[idx],b=track[(idx+1)%track.length],f=(d-trackDistances[idx])/(trackDistances[idx+1]-trackDistances[idx]);return{x:a[0]+(b[0]-a[0])*f,z:a[1]+(b[1]-a[1])*f,yaw:Math.atan2(b[0]-a[0],b[1]-a[1])};}
   // Emobi reference: one front wheel, shaped front shield, open sides and a rear bench.
   // The body colour is a single provisional colour, as confirmed by the user.
-  const carGeo=new Geometry(),trikeBody=mat('#d5d8d1',0,.39,.18),trikeGlass=mat('#91a7a6',0,.21,.55);
+  const carGeo=new Geometry(),carGlassGeo=new Geometry(),trikeBody=mat('#d5d8d1',0,.39,.18),trikeGlass=mat('#91a7a6',0,.21,.55);
   carGeo.box(0,.46,-.20,1.22,.20,2.30,m.dark);
   carGeo.box(0,.84,-.94,1.24,.65,.72,trikeBody);
   carGeo.box(0,1.02,-.74,1.12,.25,.70,mat('#465052',0,.75));
@@ -464,8 +464,8 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
    let x0=glassXs[col],x1=glassXs[col+1],t0=glassRows[row],t1=glassRows[row+1];
    let a=glassPoint(x0,t0),b=glassPoint(x0,t1),c=glassPoint(x1,t1),d=glassPoint(x1,t0);
    let na=glassNormal(x0,t0),nb=glassNormal(x0,t1),nc=glassNormal(x1,t1),nd=glassNormal(x1,t0);
-   carGeo.tri(b,a,d,trikeGlass,[[0,1],[0,0],[1,0]],[nb,na,nd]);
-   carGeo.tri(b,d,c,trikeGlass,[[0,1],[1,0],[1,1]],[nb,nd,nc]);
+   carGlassGeo.tri(b,a,d,trikeGlass,[[0,1],[0,0],[1,0]],[nb,na,nd]);
+   carGlassGeo.tri(b,d,c,trikeGlass,[[0,1],[1,0],[1,1]],[nb,nd,nc]);
   }
   const trikeFrame=mat('#252c2d',0,.68,.12);
   for(const t of [0,1])for(let col=0;col<glassXs.length-1;col++)
@@ -591,7 +591,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  let tw1=tower(322,56,26),tw2=tower(548,194,26);for(let dx of [-4.7,4.7])for(let h of [18.46,22.62,26]){let pts=[];for(let i=0;i<=36;i++){let t=i/36;pts.push([tw1[0]+(tw2[0]-tw1[0])*t+dx,h-1-3.4*Math.sin(t*Math.PI),tw1[1]+(tw2[1]-tw1[1])*t]);}details.tube(pts,.035,m.dark,5);}
  // Neighbourhood backdrop is approximate scenery, not mapped housing or street-level imagery.
  const distant=new Geometry();for(let i=0;i<27;i++){let a=i/27*TAU,rr=125+R(0,35),x=i<9?(i<4?-151:-83):i<18?84:-66+(i-18)*16.5,z=i<9?-42+i*17:i<18?-21+(i-9)*17:132,w=R(6,10),d=R(6,11),h=R(5.2,7.3);distant.scope(M.compose(0,FestaScenery.height(x,z),0),()=>{distant.box(x,h/2,z,w,h,d,mat(['#ddd8c9','#c4ccca','#e6e0d4','#b8b9ac'][i%4],3,.9));let roof=mat(['#676f70','#8a7163','#5d6966'][i%3],10,.7);distant.tri([x-w/2-.35,h,z-d/2-.35],[x+w/2+.35,h,z-d/2-.35],[x,h+2,z-d/2-.35],roof);distant.tri([x+w/2+.35,h,z+d/2+.35],[x-w/2-.35,h,z+d/2+.35],[x,h+2,z+d/2+.35],roof);distant.quad([x-w/2-.35,h,z-d/2-.35],[x-w/2-.35,h,z+d/2+.35],[x,h+2,z+d/2+.35],[x,h+2,z-d/2-.35],roof,3,3);distant.quad([x,h+2,z-d/2-.35],[x,h+2,z+d/2+.35],[x+w/2+.35,h,z+d/2+.35],[x+w/2+.35,h,z-d/2-.35],roof,3,3);for(let j=0;j<3;j++)distant.box(x+(j-1)*2.1,h*.62,z+d/2+.02,1.15,1.35,.03,m.glass);});}
- const childSign=atlas.banner('WC','にしかまくら子どもの家','当日のトイレ','#426861');
+ const childSign=atlas.banner('WC','にしかまくら子どもの家・トイレ','当日のトイレ','#426861');
  FestaScenery.build({details,green,distant,signGeo,childSign,p,m,mat,M,rng,TAU,ga,gb,gc,gw,gd,gymRise});
  // No collisions against visitors: they are visual atmosphere, not event crowd predictions.
  function isWalkable(x,z,rad=.26){if(!polyInside(x,z,campus)||polyInside(x,z,restricted))return false;for(let c of colliders){let dx=Math.max(Math.abs(x-c.x)-c.w/2,0),dz=Math.max(Math.abs(z-c.z)-c.d/2,0);if(dx*dx+dz*dz<rad*rad)return false;}for(let t of trunks)if(Math.hypot(x-t.x,z-t.z)<rad+t.r)return false;return true;}
@@ -603,7 +603,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  function nearestWalkable(q,max=10){if(isWalkable(q[0],q[1],.31))return [...q];for(let r=.4;r<=max;r+=.35)for(let i=0;i<32;i++){let a=i*TAU/32,x=q[0]+Math.sin(a)*r,z=q[1]+Math.cos(a)*r;if(isWalkable(x,z,.31))return[x,z];}return null;}
  const gym=data.locations.find(r=>r.id==='GYM');gym.approach=[gc[0],ga[1]+18.8];gym.marker=[gc[0],3.1+gymRise,ga[1]+18.8];markers.push(gym);
  for(let r of markers){if(r.id==='WC')r.approach=[(menStartX+womenEndX)/2,gb[1]+5.5];r.approach=nearestWalkable(r.approach)||nearestWalkable(r.pos);}
- progress(.62,'来場者・ヤギ・試乗車の動きを準備しています');
+ progress(.62,'来場者・ヤギ・走行車両の動きを準備しています');
  function human(variant=0){let g=new Geometry(),shirt=mat(['#7f9c9a','#d8c5ad','#a76250','#4c6670','#787c58','#b7b4a9','#655c73','#e3d1b1'][variant%8],6,.93),pants=mat(['#41494e','#746854','#4a575a','#485669'][variant%4],6,.91),skin=mat(['#cba584','#d8b69a','#bc9879','#d0ad8c'][variant%4],0,.78),hair=mat(['#383733','#4b4137','#77756e'][variant%3],0,.96);
   // Contoured torso plus separate collar, cuffs and shoes avoid faceless capsule bodies.
   let rings=[[.88,.19,.126],[.98,.19,.13],[1.16,.218,.148],[1.32,.243,.144],[1.385,.222,.127],[1.445,.075,.064]];for(let k=0;k<rings.length-1;k++)for(let j=0;j<20;j++){let a=j/20*TAU,b=(j+1)/20*TAU,lo=rings[k],hi=rings[k+1],pt=(r,t)=>[Math.cos(t)*r[1],r[0],Math.sin(t)*r[2]];g.quad(pt(lo,a),pt(hi,a),pt(hi,b),pt(lo,b),shirt,1,1);}g.cylinder([0,1.40,0],[0,1.49,0],.061,.062,skin,10);g.sphere(0,1.57,.012,.114,.142,.107,skin,16,11);g.sphere(0,1.575,-.009,.116,.145,.11,hair,20,10,0,1.26); // hair cap leaves the face forward (+Z)
@@ -617,6 +617,39 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
   function childGeometry(variant){let g=new Geometry(),shirt=mat(['#dfb357','#72a0a2','#aa6357','#8c9a66'][variant%4],6,.92),pants=mat('#506277',6,.91),skin=mat('#d4ad8b',0,.77),hair=mat('#3d342e',0,.94);
    g.sphere(0,.83,0,.20,.30,.145,shirt,14,10);g.cylinder([0,1.04,0],[0,1.17,0],.065,.06,skin,10);g.sphere(0,1.34,0,.165,.19,.15,skin,16,11);g.sphere(0,1.40,-.015,.17,.145,.153,hair,16,9,0,1.35);
    for(const s of [-1,1]){g.sphere(s*.06,1.36,.141,.010,.008,.008,m.dark,8,5);g.animate([s*.19,1.04,0],s,()=>{g.cylinder([s*.19,1.02,0],[s*.27,.65,.025],.067,.045,shirt,10);g.sphere(s*.27,.62,.03,.048,.06,.044,skin,10,7);});g.animate([s*.09,.58,0],s*2,()=>{g.cylinder([s*.09,.58,0],[s*.11,.25,0],.079,.062,pants,10);g.cylinder([s*.11,.25,0],[s*.11,.09,.025],.060,.05,pants,10);g.sphere(s*.11,.055,.085,.072,.052,.115,m.dark,10,7);});}return g;
+  }
+  function kamanyanGeometry(){
+   const g=new Geometry(),white=mat('#faf9f4',6,.95),pink=mat('#efb8c4',0,.8),black=mat('#252829',0,.75),red=mat('#c93538',6,.82),blue=mat('#a9d6e6',6,.86),green=mat('#83b9aa',6,.82),yellow=mat('#d3a330',6,.8);
+   g.sphere(0,.86,0,.46,.67,.35,white,24,16);
+   for(const side of [-1,1]){
+    g.sphere(side*.26,.20,.02,.22,.20,.23,white,16,12);
+    g.sphere(side*.44,1.02,.03,.17,.24,.20,white,14,10);
+    g.sphere(side*.54,.72,.20,.13,.14,.13,white,12,9);
+   }
+   g.sphere(0,1.68,.06,.61,.47,.48,white,28,18);
+   for(const side of [-1,1]){
+    const x=side*.39;
+    g.tri([x-side*.19,1.95,.02],[x,2.37,.03],[x+side*.20,1.97,.04],white);
+    g.tri([x-side*.12,2.00,.10],[x,2.28,.12],[x+side*.12,2.01,.11],pink);
+    g.sphere(side*.22,1.73,.485,.087,.12,.018,black,12,9);
+    g.sphere(side*.196,1.77,.507,.024,.035,.01,white,8,7);
+    for(let j=-1;j<=1;j++)g.cylinder([side*.28,1.54+j*.07,.49],[side*.61,1.55+j*.11,.47],.008,.006,black,6);
+   }
+   g.sphere(0,1.56,.54,.055,.035,.028,pink,11,8);
+   g.cylinder([0,1.52,.56],[0,1.46,.55],.008,.008,black,6);
+   for(const side of [-1,1])g.cylinder([0,1.46,.55],[side*.10,1.44,.53],.008,.008,black,6);
+   // Red collar, white shirasu and the Buddha pouch visible in the supplied photo.
+   g.cylinder([-.34,1.27,.24],[.34,1.27,.24],.026,.026,red,12);
+   g.sphere(0,1.20,.38,.22,.07,.055,white,16,10);
+   g.tri([-.23,1.20,.39],[-.33,1.27,.39],[-.33,1.13,.39],white);
+   g.sphere(.13,1.22,.434,.009,.009,.008,black,7,6);
+   g.cylinder([-.28,1.10,.30],[.28,.62,.42],.018,.018,yellow,10);
+   g.sphere(.27,.58,.39,.28,.30,.12,blue,18,12);
+   for(let i=0;i<6;i++)g.sphere(.10+i*.065,.82,.44,.048,.048,.045,green,9,7);
+   for(const side of [-1,1])g.sphere(.27+side*.075,.60,.502,.013,.018,.009,black,7,6);
+   g.cylinder([.23,.49,.505],[.31,.49,.505],.009,.009,black,7);
+   g.sphere(.27,.46,.507,.04,.019,.008,pink,9,7);
+   return g;
   }
   const actorGroups=Array.from({length:8},()=>[]),childGroups=Array.from({length:4},()=>[]),actorPlans=[];let count=0;
   function actor(x,z,yaw=0,walk=false,scale=1,path=null,type='visitor'){let idx=count++,child=type==='child',group=idx%(child?4:8),instance={matrix:M.compose(x,0,z,yaw,scale),info:[R(0,6.28),walk?1:0,0,0]},obj={x,z,yaw,scale,instance,walk,path,pathIndex:0,speed:R(.40,.64),group,type,index:idx};(child?childGroups:actorGroups)[group].push(instance);actorPlans.push(obj);}
@@ -632,15 +665,27 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  const meshes={};meshes.base=new Mesh(renderer,one,{name:'Architecture, ground and booths'});meshes.details=new Mesh(renderer,details,{name:'Furniture, windows and equipment'});meshes.foliage=new Mesh(renderer,green,{name:'Foliage',instances:[{matrix:M.identity(),info:[0,0,1,0]}]});meshes.roof=new Mesh(renderer,roofGeo,{name:'Gym roof'});meshes.signs=new Mesh(renderer,signGeo,{name:'Readable booth signs'});meshes.distant=new Mesh(renderer,distant,{name:'Approximate neighbourhood',shadow:false});meshes.flags=new Mesh(renderer,bannerGeo,{name:'Fabric banners',instances:bannerInstances});
  const seatedGroups=Array.from({length:4},()=>[]);let seatN=0;for(let i=0;i<seats.length;i++){if(seats[i].addedGymSeat||i%4!==1&&!(seats[i].gym&&i%5===2))continue;let a=seats[i];seatedGroups[seatN++%4].push({matrix:M.compose(a.x,a.gym?gymRise:0,a.z,a.yaw,.94),info:[0,0,0,0]});}
  meshes.seated=seatedGroups.map((instances,i)=>new Mesh(renderer,seatedHuman(i),{name:'Seated visitors '+i,instances}));
- const carPose=sampleTrack(0);meshes.vehicle=new Mesh(renderer,carGeo,{name:'Generic mobility vehicle',instances:[{matrix:M.compose(carPose.x,0,carPose.z,carPose.yaw),info:[0,0,0,0]}],dynamic:true});
+ const carPose=sampleTrack(0),carMatrix=M.compose(carPose.x,0,carPose.z,carPose.yaw);meshes.vehicle=new Mesh(renderer,carGeo,{name:'Generic mobility vehicle',instances:[{matrix:carMatrix,info:[0,0,0,0]}],dynamic:true});meshes.vehicleGlass=new Mesh(renderer,carGlassGeo,{name:'Mobility vehicle windshield',instances:[{matrix:carMatrix,info:[0,0,0,0]}],dynamic:true,shadow:false});
  const goatInstances=Array.from({length:4},(_,i)=>({matrix:M.compose(gp[0]+(i%2-.5)*2.0,0,gp[1]+(Math.floor(i/2)-.5)*2.2,i*1.8,i===3?.64:1),info:[i,0,0,0]}));meshes.goats=new Mesh(renderer,goatGeometry(),{name:'Goats',instances:goatInstances,dynamic:true});
+  const kamanyanRoute=[[45,70],[45,78],[43,78],[43,64],[44,55],[45,70]];
+  const kamanyanStart=nearestWalkable(kamanyanRoute[0],2)||kamanyanRoute[0];
+  const kamanyan={x:kamanyanStart[0],z:kamanyanStart[1],yaw:0,index:1,speed:.56};
+  meshes.kamanyan=new Mesh(renderer,kamanyanGeometry(),{name:'かまくらいふ かまにゃん',instances:[{matrix:M.compose(kamanyan.x,0,kamanyan.z,0),info:[0,0,0,0]}],dynamic:true});
   meshes.actors=actorGroups.map((instances,i)=>new Mesh(renderer,human(i),{name:'Visitors '+i,instances,dynamic:true}));
   meshes.children=childGroups.map((instances,i)=>new Mesh(renderer,childGeometry(i),{name:'Children '+i,instances,dynamic:true}));
  progress(.81,'看板と案内データを仕上げています');atlas.upload(renderer.gl,(matchMedia('(pointer:coarse)').matches||innerWidth<650)?256:512);renderer.atlas=atlas;
  let crowdAmount=70,lastActorUpdate=0,carState=carPose;const crowdOrder=actorPlans.filter(a=>a.type!=='vendor'&&a.type!=='performer');
  function setCrowd(n){crowdAmount=clamp(n,0,100);const allowed=Math.round(crowdOrder.length*crowdAmount/100);crowdOrder.forEach((a,i)=>a.hidden=i>=allowed);actorPlans.filter(a=>a.type==='vendor'||a.type==='performer').forEach(a=>a.hidden=n===0);meshes.seated.forEach(m=>m.visible=n>10);renderer.shadowDirty=true;}
  setCrowd(70);
-  function update(time,dt){carState=sampleTrack(time*.88);meshes.vehicle.instances[0].matrix=M.compose(carState.x,0,carState.z,carState.yaw);meshes.vehicle.updateInstances();if(time-lastActorUpdate>.055){let elapsed=Math.min(.18,time-lastActorUpdate);lastActorUpdate=time;for(let a of actorPlans){if(a.walk&&a.path&&!a.hidden){let dest=a.path[a.pathIndex],dx=dest[0]-a.x,dz=dest[1]-a.z,dist=Math.hypot(dx,dz);if(dist<.35)a.pathIndex=(a.pathIndex+1)%a.path.length;else{let nx=a.x+dx/dist*a.speed*elapsed,nz=a.z+dz/dist*a.speed*elapsed;if(isWalkable(nx,nz,.19)){a.x=nx;a.z=nz;a.yaw=Math.atan2(dx,dz);}else a.pathIndex=(a.pathIndex+1)%a.path.length;}}let y=walkHeight(a.x,a.z),yaw=a.yaw;if(a.type==='performer'){yaw=Math.sin(time*.5+a.index*.3)*.12;y+=.04+Math.max(0,Math.sin(time*2.4+a.index*.4))*.07;}a.instance.matrix=M.compose(a.x,a.hidden?-100:y,a.z,yaw,a.scale);a.instance.info[1]=a.hidden?0:a.walk?(a.type==='performer'?.8:1):0;}meshes.actors.forEach(m=>m.updateInstances());meshes.children.forEach(m=>m.updateInstances());goatInstances.forEach((v,i)=>{let a=i*1.8+Math.sin(time*.1+i)*.3;v.matrix=M.compose(gp[0]+(i%2-.5)*2.0+Math.sin(time*.1+i)*.2,0,gp[1]+(Math.floor(i/2)-.5)*2.2,a,i===3?.64:1);});meshes.goats.updateInstances();}}
+  function update(time,dt){
+   const dest=kamanyanRoute[kamanyan.index],dx=dest[0]-kamanyan.x,dz=dest[1]-kamanyan.z,dist=Math.hypot(dx,dz);
+   if(dist<.30)kamanyan.index=(kamanyan.index+1)%kamanyanRoute.length;
+   else {const step=Math.min(dist,kamanyan.speed*dt),nx=kamanyan.x+dx/dist*step,nz=kamanyan.z+dz/dist*step;
+    if(isWalkable(nx,nz,.24)){kamanyan.x=nx;kamanyan.z=nz;kamanyan.yaw=Math.atan2(dx,dz)+Math.PI;}else kamanyan.index=(kamanyan.index+1)%kamanyanRoute.length;}
+   meshes.kamanyan.instances[0].matrix=M.compose(kamanyan.x,walkHeight(kamanyan.x,kamanyan.z)+Math.max(0,Math.sin(time*7))*.025,kamanyan.z,kamanyan.yaw);
+   meshes.kamanyan.updateInstances();
+   carState=sampleTrack(time*.88);let carMatrix=M.compose(carState.x,0,carState.z,carState.yaw);meshes.vehicle.instances[0].matrix=carMatrix;meshes.vehicleGlass.instances[0].matrix=carMatrix;meshes.vehicle.updateInstances();meshes.vehicleGlass.updateInstances();if(time-lastActorUpdate>.055){let elapsed=Math.min(.18,time-lastActorUpdate);lastActorUpdate=time;for(let a of actorPlans){if(a.walk&&a.path&&!a.hidden){let dest=a.path[a.pathIndex],dx=dest[0]-a.x,dz=dest[1]-a.z,dist=Math.hypot(dx,dz);if(dist<.35)a.pathIndex=(a.pathIndex+1)%a.path.length;else{let nx=a.x+dx/dist*a.speed*elapsed,nz=a.z+dz/dist*a.speed*elapsed;if(isWalkable(nx,nz,.19)){a.x=nx;a.z=nz;a.yaw=Math.atan2(dx,dz);}else a.pathIndex=(a.pathIndex+1)%a.path.length;}}let y=walkHeight(a.x,a.z),yaw=a.yaw;if(a.type==='performer'){yaw=Math.sin(time*.5+a.index*.3)*.12;y+=.04+Math.max(0,Math.sin(time*2.4+a.index*.4))*.07;}a.instance.matrix=M.compose(a.x,a.hidden?-100:y,a.z,yaw,a.scale);a.instance.info[1]=a.hidden?0:a.walk?(a.type==='performer'?.8:1):0;}meshes.actors.forEach(m=>m.updateInstances());meshes.children.forEach(m=>m.updateInstances());goatInstances.forEach((v,i)=>{let a=i*1.8+Math.sin(time*.1+i)*.3;v.matrix=M.compose(gp[0]+(i%2-.5)*2.0+Math.sin(time*.1+i)*.2,0,gp[1]+(Math.floor(i/2)-.5)*2.2,a,i===3?.64:1);});meshes.goats.updateInstances();}}
  progress(.90,'歩行できる経路を確認しています');
- return {data,markers,colliders,buildings,campus,field,restricted,track,trackLength,meshes,trunks,seats,atlas,categoryColors,isWalkable,walkHeight,nearestWalkable,update,setCrowd,p,getCar:()=>carState,polyInside,actorCount:actorPlans.length};
+ function setRideView(active){let visible=!active;if(meshes.vehicleGlass.visible!==visible){meshes.vehicleGlass.visible=visible;renderer.shadowDirty=true;}}
+ return {data,markers,colliders,buildings,campus,field,restricted,track,trackLength,meshes,trunks,seats,atlas,categoryColors,isWalkable,walkHeight,nearestWalkable,update,setCrowd,setRideView,p,getCar:()=>carState,getKamanyan:()=>[kamanyan.x,2.35,kamanyan.z],polyInside,actorCount:actorPlans.length};
 };
