@@ -60,4 +60,24 @@
 <text class="label" x="360" y="371">本部</text>
 <text class="label" x="409" y="554">イートイン2</text>
 <text class="label" x="474" y="490">トイレ</text>
-</g><text x="34" y="840" font-size="12">飲食：F　物販・体験：S　地域・防災：T</text></svg>
+<g fill="none">
+<polyline points="171,90 281,77 395,95 452,128 458,179 436,190 330,190 281,174 245,151 176,150 171,90" stroke="#d6ad23" stroke-width="1.8"/>
+<polyline points="171,90 281,77 395,95 452,128 458,179 436,190 330,190 281,174 245,151 176,150 171,90" stroke="#33312b" stroke-width="1.8" stroke-dasharray="3 3"/>
+<line x1="160" y1="108" x2="180" y2="98" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="222" y1="85" x2="246" y2="75" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="260" y1="78" x2="282" y2="68" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="351" y1="69" x2="378" y2="83" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="397" y1="69" x2="423" y2="83" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="433" y1="96" x2="457" y2="111" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="467" y1="114" x2="493" y2="130" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="26" y1="428" x2="47" y2="428" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="502" y1="544" x2="527" y2="544" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="508" y1="573" x2="533" y2="573" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="495" y1="683" x2="520" y2="671" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="529" y1="668" x2="551" y2="656" stroke="#bb3b2c" stroke-width="2.2"/>
+<line x1="565" y1="647" x2="580" y2="637" stroke="#bb3b2c" stroke-width="2.2"/>
+</g>
+<line x1="255" y1="720" x2="451" y2="720" stroke="#ffffff" stroke-width="1.6"/>
+<path d="M105,59 L111,65 M105,65 L111,59" fill="none" stroke="#bb3b2c" stroke-width="2"/>
+<path d="M449,741 L455,747 M449,747 L455,741" fill="none" stroke="#bb3b2c" stroke-width="2"/>
+</g><text x="34" y="816" font-size="10">[F] 飲食（キッチンカー）　[F] 飲食（テント）</text><text x="34" y="832" font-size="10">[S] 物販　[S] 有料ワークショップ・スポーツ・体験</text><text x="34" y="848" font-size="10">[T] 無料・情報・スポーツ・体験　[P] ステージ出演</text></svg>

@@ -70,7 +70,7 @@ window.FestaScenery = {
    details.quad([x,bridgeY-.28,upperZ],[x,terraceY-.28,lowerZ],[x,terraceY-.48,lowerZ],[x,bridgeY-.48,upperZ],paint);
    rail([x,bridgeY,upperZ],[x,terraceY,lowerZ]);
   }
-  // Terrace wraps around the front. The V6 entrance is slightly west of the centre.
+  // Terrace wraps around the front. The V7 entrance is slightly west of the centre.
   slab(ga[0]-stairWidth,gb[0],gb[1],lowerZ+1.3,terraceY);
   rail([ga[0]-stairWidth,terraceY,lowerZ+1.3],[gc[0]+4.3,terraceY,lowerZ+1.3]);
   rail([ga[0]-stairWidth,terraceY,lowerZ],[ga[0]-stairWidth,terraceY,lowerZ+1.3]);
@@ -112,7 +112,7 @@ window.FestaScenery = {
   for(let i=0;i<3;i++)details.box(entryX,.025+i*.05,gb[1]+4.06-i*.38,5.6,.05+i*.10,.40,paint);
   // The field-facing blue doors stand open beside their concrete steps.
   const blueDoor=mat('#83b4c2',0,.54,.12);
-  for(const [a,b] of [[335,344],[421,433],[468,484]]){
+  for(const [a,b] of [[335,344],[421,433]]){
    const za=p(470,a)[1],zb=p(470,b)[1],middle=(za+zb)/2,openingWidth=zb-za;
    for(let i=0;i<3;i++){
     const rise=(i+1)*gymRise/3;
@@ -125,7 +125,7 @@ window.FestaScenery = {
    }
   }
   // White-painted flat steel braces, with plates and bolts only on solid wall spans.
-  const spans=[[303,334],[345,420],[434,467],[485,503]];
+  const spans=[[303,334],[345,420],[434,503]];
   for(const side of [-1,1])for(const [a,b] of spans){
    const start=p(470,a)[1]+.15,end=p(470,b)[1]-.15,n=Math.max(1,Math.ceil((end-start)/5.4));
    for(let k=0;k<n;k++){
@@ -179,7 +179,7 @@ window.FestaScenery = {
     green.scope(M.compose(px,base+h*.21,pz,a),()=>green.quad([-size/2,-size/2,0],[-size/2,size/2,0],[size/2,size/2,0],[size/2,-size/2,0],leaf));
    }
   }
-  // V6 shows planting on both sides of the entrance, with the central steps clear.
+  // V7 shows planting on both sides of the entrance, with the central steps clear.
   const bedZ=gb[1]+3.2,brick=mat('#94705a',3,.98),soil=mat('#4c4835',1,1);
   const hedgeRandom=rng(2701);
   for(const [bedX,bedW,bedH] of [[ga[0]+3.0,4.6,2.9],[gb[0]-4.7,8.4,3.6]]){
