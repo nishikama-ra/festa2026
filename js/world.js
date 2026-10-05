@@ -23,7 +23,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  atlas.add('tire',(c,s)=>{c.fillStyle='#2b2b2a';c.fillRect(0,0,s,s);c.strokeStyle='#484948';c.lineWidth=5;for(let y=0;y<s;y+=27){c.beginPath();c.moveTo(0,y);c.lineTo(s*.5,y+15);c.lineTo(s,y);c.stroke();}});
  atlas.add('cloth',(c,s)=>{c.fillStyle='#eeeadf';c.fillRect(0,0,s,s);c.fillStyle='rgba(83,117,120,.12)';for(let i=0;i<s;i+=40){c.fillRect(i,0,18,s);c.fillRect(0,i,s,18);}});
  const categoryColors={F:'#a64c35',S:'#385e76',T:'#4e6c43',P:'#83503e',M:'#c39343',I:'#27595c'};
-  const signFor={};for(let rec of [...data.records.filter(r=>!['unplaced','performer','unconfirmed','workshop'].includes(r.kind)),...data.locations]){signFor[rec.id]={banner:atlas.banner(rec.id.startsWith('F-')||rec.id.startsWith('S-')||rec.id.startsWith('T-')?rec.id:({HQ:'INFO',GYM:'STAGE',MOBILITY:'RIDE',MEET:'REST',OUTSTAGE:'STAGE',GATE_MAIN:'WELCOME',GATE_WEST:'WELCOME',WC:'WC',EAT2:'REST'}[rec.id]||'FESTA'),rec.short,rec.caption,categoryColors[rec.category]),menu:atlas.sign(rec.id+'-menu',rec.short,rec.detail,categoryColors[rec.category],rec.id+'   '+(rec.status||'予定'))};}
+  const signFor={};for(let rec of [...data.records.filter(r=>!['unplaced','performer','unconfirmed','workshop'].includes(r.kind)),...data.locations]){signFor[rec.id]={banner:atlas.banner(rec.id.startsWith('F-')||rec.id.startsWith('S-')||rec.id.startsWith('T-')?rec.id:({HQ:'INFO',GYM:'STAGE',MOBILITY:'RIDE',MEET:'REST',OUTSTAGE:'STAGE',GATE_MAIN:'WELCOME',GATE_WEST:'WELCOME',WC:'WC',EAT2:'REST'}[rec.id]||'FESTA'),rec.id==='MOBILITY'?'モビリティー':rec.short,rec.id==='S-13'?'子どもくじ抽選会':rec.caption,categoryColors[rec.category]),menu:atlas.sign(rec.id+'-menu',rec.short,rec.detail,categoryColors[rec.category],rec.id+'   '+(rec.status||'予定'))};}
  const schoolSign=atlas.banner('西鎌倉','鎌倉市立西鎌倉小学校','つながりフェスタ＠にしかま2026','#415d60');
  const mainWelcome=atlas.banner('2026','つながりフェスタ＠にしかま','つながる、みつかる、すきになる','#356064');
  const warningSign=atlas.sign('走行エリア','モビリティー','実走路の中へは入れません。\n見学はトラロープの外側から。','#a74d38','車両実走路');
@@ -433,16 +433,18 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  for(let rec of data.locations.filter(r=>['MEET','EAT2','WC'].includes(r.id))){rec.approach=rec.pos;rec.marker=[rec.pos[0],2.5,rec.pos[1]];markers.push(rec);if(rec.id==='WC'){signGeo.scope(M.compose(rec.pos[0],0,rec.pos[1],0),()=>{signGeo.sign(0,2.4,0,2.2,.53,atlas.banner('WC','体育館南側・トイレ','当日のトイレ',categoryColors.I));});}}
  progress(.45,'木々・遊具・モビリティ走路を作っています');
  // Mobility trial loop is registered to the northern drawing, rather than laid over booth space.
+ // Keep booth positions and east-west coordinates; reduce the lane north-south span by 3m.
+ const lanePoint=(x,z)=>p(x,77+(z-77)*(1-3/25.25952));
  const controlPx=[[192,116],[225,94],[306,91],[391,108],[436,132],[443,164],[423,178],[350,179],[294,162],[252,141],[209,143]];
  function catmull(points,steps=12){const out=[];for(let k=0;k<points.length;k++){let a=points[(k-1+points.length)%points.length],b=points[k],c=points[(k+1)%points.length],d=points[(k+2)%points.length];for(let j=0;j<steps;j++){let t=j/steps,t2=t*t,t3=t2*t;out.push([0,1].map(i=>.5*((2*b[i])+(-a[i]+c[i])*t+(2*a[i]-5*b[i]+4*c[i]-d[i])*t2+(-a[i]+3*b[i]-3*c[i]+d[i])*t3)));}}return out;}
- const track=catmull(controlPx.map(q=>p(...q)),16);let trackLength=0,trackDistances=[0];
+ const track=catmull(controlPx.map(q=>lanePoint(...q)),16);let trackLength=0,trackDistances=[0];
  // A continuous two-metre ribbon uses shared joins so corners have no triangular gaps.
  const trackNormals=track.map((q,i)=>{let a=track[(i-1+track.length)%track.length],b=track[(i+1)%track.length],dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz);return[-dz/l,dx/l];});
  for(let i=0;i<track.length;i++){let j=(i+1)%track.length,a=track[i],b=track[j],na=trackNormals[i],nb=trackNormals[j],l=Math.hypot(b[0]-a[0],b[1]-a[1]);trackLength+=l;trackDistances.push(trackLength);
  one.quad([a[0]-na[0],.035,a[1]-na[1]],[a[0]+na[0],.035,a[1]+na[1]],[b[0]+nb[0],.035,b[1]+nb[1]],[b[0]-nb[0],.035,b[1]-nb[1]],mat('#bba990',1,.98),2,l);
  if(i%8<4)for(let side of [-1,1])line(details,[a[0]+na[0]*.95*side,a[1]+na[1]*.95*side],[b[0]+nb[0]*.95*side,b[1]+nb[1]*.95*side],.085,mat('#f3e8d0'),.043);
  }
- const restricted=catmull([[171,90],[281,77],[395,95],[452,128],[458,179],[436,190],[330,190],[281,174],[245,151],[176,150]].map(q=>p(...q)),5);
+ const restricted=catmull([[171,90],[281,77],[395,95],[452,128],[458,179],[436,190],[330,190],[281,174],[245,151],[176,150]].map(q=>lanePoint(...q)),5);
  function rail(a,b,height=.65,wood=false,net=false){let len=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.ceil(len/2.2));let material=wood?mat('#a48d66',5):mat('#dedfd4',0,.45,.35);for(let i=0;i<=n;i++){let x=a[0]+(b[0]-a[0])*i/n,z=a[1]+(b[1]-a[1])*i/n;details.cylinder([x,.05,z],[x,height+.05,z],wood?.045:.025,wood?.042:.025,material,7);if(!wood)details.box(x,.035,z,.28,.07,.34,m.base);}for(let h of [height*.40,height])details.cylinder([a[0],h,a[1]],[b[0],h,b[1]],wood?.036:.021,wood?.036:.021,material,7);if(net)details.quad([a[0],.15,a[1]],[a[0],height,a[1]],[b[0],height,b[1]],[b[0],.15,b[1]],mat('#a2aa9a',11,.82),len/1.1,height/1.1);}
  const ropeYellow=mat('#e1ba22',6,.9),ropeBlack=mat('#252525',6,.9);
  function rope(a,b){let len=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.ceil(len/2.2)),point=t=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
