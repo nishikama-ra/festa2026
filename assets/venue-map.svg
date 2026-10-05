@@ -38,26 +38,26 @@
 <g transform="translate(-11 -8)"><circle cx="438.0" cy="198.0" r="3" fill="#385e76"/><text x="438.0" y="192.0" transform="rotate(-65 438.0 192.0)" font-size="9" font-weight="bold">S-10</text></g>
 <g transform="translate(-11 -8)"><circle cx="312.0" cy="198.0" r="3" fill="#385e76"/><text x="312.0" y="192.0" transform="rotate(-65 312.0 192.0)" font-size="9" font-weight="bold">S-11</text></g>
 <g transform="translate(-11 -8)"><circle cx="466.0" cy="198.0" r="3" fill="#385e76"/><text x="466.0" y="192.0" transform="rotate(-65 466.0 192.0)" font-size="9" font-weight="bold">S-12</text></g>
-<circle cx="326.0" cy="367.0" r="3" fill="#4e6c43"/><text x="326.0" y="361.0" transform="rotate(-65 326.0 361.0)" font-size="9" font-weight="bold">T-1</text>
+<circle cx="340.0" cy="367.0" r="3" fill="#4e6c43"/><text x="340.0" y="361.0" transform="rotate(-65 340.0 361.0)" font-size="9" font-weight="bold">T-1</text>
 <g transform="translate(-23 0)"><rect x="465" y="273.0" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="478" y="282.0" text-anchor="middle">T-2</text></g>
 <g transform="translate(-23 0)"><rect x="465" y="259.0" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="478" y="268.0" text-anchor="middle">T-3</text></g>
 <g transform="translate(-11 -8)"><circle cx="410.0" cy="198.0" r="3" fill="#4e6c43"/><text x="410.0" y="192.0" transform="rotate(-65 410.0 192.0)" font-size="9" font-weight="bold">T-4</text></g>
 <rect x="165" y="246" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="178" y="255" text-anchor="middle">T-5</text>
 <g transform="translate(-11 -8)"><circle cx="326.0" cy="198.0" r="3" fill="#4e6c43"/><text x="326.0" y="192.0" transform="rotate(-65 326.0 192.0)" font-size="9" font-weight="bold">T-6</text></g>
-<circle cx="312.0" cy="367.0" r="3" fill="#4e6c43"/><text x="312.0" y="361.0" transform="rotate(-65 312.0 361.0)" font-size="9" font-weight="bold">T-7</text>
-<circle cx="298.0" cy="367.0" r="3" fill="#4e6c43"/><text x="298.0" y="361.0" transform="rotate(-65 298.0 361.0)" font-size="9" font-weight="bold">T-8</text>
-<circle cx="353.0" cy="367.0" r="3" fill="#4e6c43"/><text x="353.0" y="361.0" transform="rotate(-65 353.0 361.0)" font-size="9" font-weight="bold">T-9</text>
+<circle cx="326.0" cy="367.0" r="3" fill="#4e6c43"/><text x="326.0" y="361.0" transform="rotate(-65 326.0 361.0)" font-size="9" font-weight="bold">T-7</text>
+<circle cx="312.0" cy="367.0" r="3" fill="#4e6c43"/><text x="312.0" y="361.0" transform="rotate(-65 312.0 361.0)" font-size="9" font-weight="bold">T-8</text>
+<circle cx="367.0" cy="367.0" r="3" fill="#4e6c43"/><text x="367.0" y="361.0" transform="rotate(-65 367.0 361.0)" font-size="9" font-weight="bold">T-9</text>
 <g transform="translate(-11 -8)"><circle cx="396.0" cy="198.0" r="3" fill="#4e6c43"/><text x="396.0" y="192.0" transform="rotate(-65 396.0 192.0)" font-size="9" font-weight="bold">T-10</text></g>
 <g transform="translate(-26 0)"><rect x="283" y="263" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="296" y="272" text-anchor="middle">T-12</text></g>
-<circle cx="340.0" cy="367.0" r="3" fill="#4e6c43"/><text x="340.0" y="361.0" transform="rotate(-65 340.0 361.0)" font-size="9" font-weight="bold">T-13</text>
+<circle cx="354.0" cy="367.0" r="3" fill="#4e6c43"/><text x="354.0" y="361.0" transform="rotate(-65 354.0 361.0)" font-size="9" font-weight="bold">T-13</text>
 <g transform="translate(-23 0)"><rect x="465" y="245.0" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="478" y="254.0" text-anchor="middle">T-14</text></g>
 <rect x="137" y="64" width="26" height="12" rx="2" fill="#4e6c43"/><text class="id" x="150" y="73" text-anchor="middle">T-15</text>
-<circle cx="284.0" cy="367.0" r="3" fill="#4e6c43"/><text x="284.0" y="361.0" transform="rotate(-65 284.0 361.0)" font-size="9" font-weight="bold">T-16</text>
+<circle cx="298.0" cy="367.0" r="3" fill="#4e6c43"/><text x="298.0" y="361.0" transform="rotate(-65 298.0 361.0)" font-size="9" font-weight="bold">T-16</text>
 <text class="label" x="74" y="100">西ヶ谷門</text>
 <text class="label" x="523" y="655">正門</text>
 <text class="label" x="332" y="239">屋外ステージ</text>
 <text class="label" x="335" y="282">イートイン1</text>
-<text class="label" x="360" y="371">本部</text>
+<text class="label" x="374" y="371">本部</text>
 <text class="label" x="409" y="554">イートイン2</text>
 <text class="label" x="474" y="490">トイレ</text>
 <g fill="none">
@@ -81,4 +81,4 @@
 <path d="M105,59 L111,65 M105,65 L111,59" fill="none" stroke="#bb3b2c" stroke-width="2"/>
 <path d="M449,741 L455,747 M449,747 L455,741" fill="none" stroke="#bb3b2c" stroke-width="2"/>
 <rect x="257" y="333" width="26" height="12" rx="2" fill="#a64c35"/><text class="id" x="270" y="342" text-anchor="middle">F-16</text><text x="250" y="342" text-anchor="end" font-size="10">philosophy</text>
-<circle cx="469" cy="190" r="3" fill="#385e76"/><text x="469" y="184" transform="rotate(-65 469 184)" font-size="9" font-weight="bold">S-13</text><text x="483" y="193" font-size="10">西鎌倉商店会</text></g><text x="34" y="816" font-size="10">[F] 飲食（キッチンカー）　[F] 飲食（テント）</text><text x="34" y="832" font-size="10">[S] 物販　[S] 有料ワークショップ・スポーツ・体験</text><text x="34" y="848" font-size="10">[T] 無料・情報・スポーツ・体験　[P] ステージ出演</text></svg>
+<circle cx="284" cy="367" r="3" fill="#385e76"/><text x="284" y="361" transform="rotate(-65 284 361)" font-size="9" font-weight="bold">S-13</text><text x="270" y="385" font-size="10">西鎌倉商店会</text></g><text x="34" y="816" font-size="10">[F] 飲食（キッチンカー）　[F] 飲食（テント）</text><text x="34" y="832" font-size="10">[S] 物販　[S] 有料ワークショップ・スポーツ・体験</text><text x="34" y="848" font-size="10">[T] 無料・情報・スポーツ・体験　[P] ステージ出演</text></svg>
