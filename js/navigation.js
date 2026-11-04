@@ -1,7 +1,7 @@
 /* Occupancy grid + A*. Diagonal moves cannot cut the corner of a wall or counter. */
 'use strict';
 window.FestaNavigation=class {
- constructor(world){this.world=world;this.step=.70;this.x0=-67;this.z0=-58;this.nx=184;this.nz=244;this.size=this.nx*this.nz;this.open=new Uint8Array(this.size);for(let z=0;z<this.nz;z++)for(let x=0;x<this.nx;x++){let p=this.point(z*this.nx+x);this.open[z*this.nx+x]=world.isWalkable(p[0],p[1],.34)?1:0;}}
+ constructor(world){this.world=world;this.step=.70;const xs=world.campus.map(([x])=>x),zs=world.campus.map(([,z])=>z);this.x0=Math.floor(Math.min(...xs))-1;this.z0=Math.floor(Math.min(...zs))-1;this.nx=Math.ceil((Math.max(...xs)+1-this.x0)/this.step)+1;this.nz=Math.ceil((Math.max(...zs)+1-this.z0)/this.step)+1;this.size=this.nx*this.nz;this.open=new Uint8Array(this.size);for(let z=0;z<this.nz;z++)for(let x=0;x<this.nx;x++){let p=this.point(z*this.nx+x);this.open[z*this.nx+x]=world.isWalkable(p[0],p[1],.34)?1:0;}}
  point(i){return[this.x0+(i%this.nx)*this.step,this.z0+Math.floor(i/this.nx)*this.step];}
  index(p){return Math.round((p[1]-this.z0)/this.step)*this.nx+Math.round((p[0]-this.x0)/this.step);}
  nearest(p){let x=Math.round((p[0]-this.x0)/this.step),z=Math.round((p[1]-this.z0)/this.step),best=-1,dist=Infinity;for(let r=0;r<18;r++){for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){if(r&&Math.abs(dx)!==r&&Math.abs(dz)!==r)continue;let xx=x+dx,zz=z+dz;if(xx<0||xx>=this.nx||zz<0||zz>=this.nz)continue;let i=zz*this.nx+xx;if(!this.open[i])continue;let q=this.point(i),d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<dist){dist=d;best=i;}}if(best>=0)return best;}return-1;}
