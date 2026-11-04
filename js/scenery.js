@@ -44,7 +44,7 @@ window.FestaScenery = {
    ctx.fillStyle='rgba(218,228,226,.10)';ctx.fillRect(s*.23,0,s*.03,s);ctx.fillRect(s*.75,0,s*.018,s);
   });
  },
- build({details,green,distant,signGeo,childSign,p,m,mat,M,rng,TAU,ga,gb,gc,gw,gd,gymRise=.45}){
+ build({details,green,distant,signGeo,childSign,p,planPoint,onRoad,gateOpen,m,mat,M,rng,TAU,ga,gb,gc,gw,gd,gymRise=.45}){
   const rr=rng(70031),pick=(a,b)=>a+(b-a)*rr();
   // XB230729: a lower entrance terrace, a rising stair, then the school bridge.
   // All three share their connection vertices; no independent canopy covers the bridge.
@@ -156,6 +156,7 @@ window.FestaScenery = {
   // Low shrubs and trees outside the boundary. They never change the public walking area.
    const overlapsGym=(x,z,r)=>x+r>ga[0]&&x-r<gb[0]&&z+r>ga[1]&&z-r<gb[1];
    function foliage(x,z,h,seed,width=1,cards=82,autumn=false){
+    if(gateOpen(x,z)||onRoad(x,z,.6))return;
    if(x>55&&x<80&&z>26&&z<82)return;
    const base=window.FestaScenery.height(x,z);
    if(x<-52&&x>-88&&z<-12&&z>-70)h=Math.min(h,6.2);
@@ -225,7 +226,7 @@ window.FestaScenery = {
   }
   }
   // A real height surface under the trees; the tops of trees alone are not hills.
-  const height=window.FestaScenery.height;
+  const height=(x,z)=>onRoad(x,z,3)||gateOpen(x,z)?0:window.FestaScenery.height(x,z);
   const xs=[...new Set([...Array.from({length:89},(_,i)=>-156+i*4),60.8,75.2,103.2])].sort((a,b)=>a-b);
   const zs=[...new Set([...Array.from({length:72},(_,i)=>-112+i*4),15.08,wallZ0,wallZ1,96.08])].sort((a,b)=>a-b);
   for(let ix=0;ix<xs.length-1;ix++)for(let iz=0;iz<zs.length-1;iz++){
@@ -373,7 +374,7 @@ window.FestaScenery = {
    }
   // Photograph-visible playground details along the northern boundary.
   const blue=mat('#338db0',0,.63,.08),red=mat('#ac4c39',0,.68),yellow=mat('#dbb548',0,.60);
-  const slide=p(411,88);
+  const slide=planPoint(666,235);
   details.scope(M.compose(slide[0],0,slide[1],.18),()=>{
    for(const x of [-.55,.55])for(const z of [-.55,.55])details.cylinder([x,.02,z],[x,3.15,z],.045,.045,blue,8);
    details.box(0,1.94,0,1.22,.09,1.2,mat('#899892',0,.7));
@@ -385,12 +386,22 @@ window.FestaScenery = {
    details.quad([-.44,1.97,.55],[.44,1.97,.55],[.44,.16,3.45],[-.44,.16,3.45],yellow,1,3);
    for(let y=.28;y<1.97;y+=.27)details.cylinder([-.47,y,-.69],[.47,y,-.69],.026,.026,m.metal,7);
   });
-  const bars=p(483,126);
-  for(let k=0;k<5;k++){
-   const x=bars[0]+k*1.5,h=1.0+k*.27;
-   for(const dx of [-.65,.65])details.cylinder([x+dx,0,bars[1]],[x+dx,h,bars[1]],.032,.032,blue,8);
-   details.cylinder([x-.65,h,bars[1]],[x+.65,h,bars[1]],.028,.028,m.metal,8);
+  for(const [px,pz,yaw] of [[1171,230,-.54],[1267,303,-.57],[1368,371,-.55]]){
+   const [x,z]=planPoint(px,pz);
+   details.scope(M.compose(x,0,z,yaw),()=>{
+    for(let k=0;k<=5;k++){
+     const u=(k-2.5)*1.05,h=1+k*.216;
+     details.cylinder([u,0,0],[u,h,0],.032,.032,blue,8);
+     if(k<5)details.cylinder([u,h,0],[u+1.05,h,0],.028,.028,m.metal,8);
+    }
+   });
   }
+  const [climbX,climbZ]=planPoint(480,324);
+  for(let i=0;i<3;i++){
+   const x=climbX+(i-1)*.65;
+   details.cylinder([x,0,climbZ],[x,2.45,climbZ],.038,.038,blue,8);
+  }
+  details.cylinder([climbX-.72,2.45,climbZ],[climbX+.72,2.45,climbZ],.032,.032,m.metal,8);
   // Basketball hoop in the northern playground photos; simple pole and backboard.
   const hoop=p(365,75);
   details.cylinder([hoop[0],0,hoop[1]],[hoop[0],3.5,hoop[1]],.075,.075,mat('#aab4ad',0,.65,.2),10);
