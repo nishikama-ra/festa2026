@@ -6,7 +6,9 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  const p=(x,z)=>[(x-320)*.22,(z-290)*.22];
  const c3=(x,z,y=0)=>{let q=p(x,z);return[q[0],y,q[1]];};
  const atlas=new Atlas(512);const loadImage=url=>new Promise((res,rej)=>{let i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('内蔵テクスチャを読み込めません。'));i.src=url;});
- const gravel=await loadImage(FESTA_ASSETS.gravel),grass=await loadImage(FESTA_ASSETS.grass);
+ const [gravel,grass,teresaLogo]=await Promise.all([
+  loadImage(FESTA_ASSETS.gravel),loadImage(FESTA_ASSETS.grass),loadImage(FESTA_ASSETS.teresaLogo)
+ ]);
  progress(.08,'地面と建物の素材を準備しています');
  atlas.add('white',(c,s)=>{c.fillStyle='#fff';c.fillRect(0,0,s,s);});
  function photoTexture(name,img,base,noise=.25){return atlas.add(name,(c,s)=>{c.drawImage(img,0,0,s,s);let im=c.getImageData(0,0,s,s),bc=color(base);for(let i=0;i<im.data.length;i+=4){let g=im.data[i]/255,f=.82+g*noise;for(let j=0;j<3;j++)im.data[i+j]=clamp(bc[j]*255*f,0,255);im.data[i+3]=255;}c.putImageData(im,0,0);});}
@@ -438,8 +440,23 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  function tent(rec,override=null){let pos=override||rec.pos,w=rec.width||3.02,d=rec.depth||2.75,yaw=rec.yaw||0;let roofTint=rec.id==='S-3'||rec.id==='S-9'?'#8393a0':rec.id==='F-11'?'#859690':'#f8f7ef';let band=mat(categoryColors[rec.category],6,.92);one.scope(M.compose(pos[0],0,pos[1],yaw),()=>{tentRoof(one,w,d,mat(roofTint,6,.92));for(let x of rec.id==='F-10'?[-w/2+.035,0,w/2-.035]:[-w/2+.035,w/2-.035])for(let z of [-d/2+.035,d/2-.035])one.cylinder([x,.03,z],[x,2.2,z],.029,.026,m.metal,8);one.box(0,2.10,d/2,w,.29,.026,band);one.box(0,2.1,-d/2,w,.29,.025,mat(roofTint,6));for(let x of [-w/2,w/2])one.box(x,2.1,0,.025,.29,d,mat(roofTint,6));one.cylinder([-w/2,2.17,-d/2],[w/2,2.17,d/2],.021,.021,m.metal,8);one.cylinder([w/2,2.17,-d/2],[-w/2,2.17,d/2],.021,.021,m.metal,8);
     // Back sheet for alternate stalls, not a solid interior box.
     if(rec.category==='F'||rec.id==='HQ')one.box(0,1.15,-d/2,w,1.87,.015,mat('#eeeee5',6,.94));});
-   details.scope(M.compose(pos[0],0,pos[1],yaw),()=>{if(rec.id==='F-10'){table(details,-1.5,.40,2.28,.73);table(details,1.5,.40,2.28,.73);details.scope(M.compose(-1.5,0,0),()=>goods(details,rec));chair(details,-2.15,-.53,0,'#65746c');details.box(-.75,.23,-.46,.54,.42,.40,mat('#af9270',5));}
-    else{table(details,0,.40,Math.min(w-.45,2.28),.73);goods(details,rec);chair(details,-.65,-.53,0,'#65746c');details.box(.75,.23,-.46,.54,.42,.40,mat('#af9270',5));}if(rec.category==='T')details.sign(.56,1.5,-1.25,.95,.98,signFor[rec.id].menu,true);
+   details.scope(M.compose(pos[0],0,pos[1],yaw),()=>{
+    if(rec.id==='F-10'){
+     table(details,-1.5,.40,2.28,.73);
+     table(details,1.5,.40,2.28,.73);
+     details.scope(M.compose(-1.5,0,0),()=>goods(details,rec));
+     chair(details,-2.15,-.53,0,'#65746c');
+     details.box(-.75,.23,-.46,.54,.42,.40,mat('#af9270',5));
+     for(const x of [.9,1.5,2.1]){
+      details.box(x,.792,.13,.24,.012,.32,mat('#fbf8ee'));
+      details.cylinder([x+.15,.805,.22],[x+.15,.805,.04],.012,.012,mat('#647d9a'),6);
+     }
+    }else{
+     table(details,0,.40,Math.min(w-.45,2.28),.73);
+     goods(details,rec);chair(details,-.65,-.53,0,'#65746c');
+     details.box(.75,.23,-.46,.54,.42,.40,mat('#af9270',5));
+    }
+    if(rec.category==='T')details.sign(.56,1.5,-1.25,.95,.98,signFor[rec.id].menu,true);
    });
    signGeo.scope(M.compose(pos[0],0,pos[1],yaw),()=>{selectableSign(rec.id,()=>signGeo.sign(0,2.15,d/2+.03,Math.min(w-.09,2.87),.62,signFor[rec.id].banner));selectableSign(rec.id,()=>aframe(signGeo,-w/2+.20,d/2+.40,signFor[rec.id].menu,-.14));});
    // Counters and canopy uprights block walking; the front of the stall remains approachable.
@@ -742,6 +759,8 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  // No collisions against visitors: they are visual atmosphere, not event crowd predictions.
  function teresaShuttle(x,z){
   const paint=mat('#fafaf8',0,.42,.22),trim=mat('#25292b',0,.53,.16),window=windowMat('#657177');
+  const logo=atlas.add('teresa-logo',(canvas,size)=>canvas.drawImage(teresaLogo,0,0,size,size));
+  const logoRatio=teresaLogo.naturalHeight/teresaLogo.naturalWidth;
   details.scope(M.compose(x,0,z,0),()=>{
    const sections=[
     [-2.69,.83,.48,1.49],[-2.59,.93,.43,1.52],[-2.35,.94,.43,1.53],
@@ -799,6 +818,11 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
    details.box(0,1.11,2.62,.96,.035,.035,m.metal);
    details.box(0,.50,-2.685,1.65,.14,.027,paint);
    details.box(0,1.14,-2.663,.49,.19,.028,m.whiteMetal);
+   details.sign(0,.954,2.696,.56,.56*logoRatio,logo);
+   details.scope(M.compose(0,0,-2.696,Math.PI),()=>details.sign(0,.88,0,.84,.84*logoRatio,logo));
+   for(const side of [-1,1]){
+    details.scope(M.compose(side*.946,0,0,side*Math.PI/2),()=>details.sign(0,.86,0,1.62,1.62*logoRatio,logo));
+   }
   });
   addBoxCollider(x,z,1.88,5.38,'駐車車両');
  }
@@ -1128,7 +1152,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  meshes.boardingStaff=boardingStaff.map(({staff,instances})=>new Mesh(renderer,staff,{name:"乗降場の誘導員",instances}));
  meshes.seated=seatedGroups.map((instances,i)=>new Mesh(renderer,seatedHuman(i),{name:'Seated visitors '+i,instances}));
  const carPose=sampleTrack(0),carMatrix=M.compose(carPose.x,0,carPose.z,carPose.yaw);meshes.vehicle=new Mesh(renderer,carGeo,{name:'Generic mobility vehicle',instances:[{matrix:carMatrix,info:[0,0,0,0]}],dynamic:true});meshes.vehicleGlass=new Mesh(renderer,carGlassGeo,{name:'Mobility vehicle windshield',instances:[{matrix:carMatrix,info:[0,0,0,0]}],dynamic:true,shadow:false});
- const goatInstances=Array.from({length:4},(_,i)=>({matrix:M.compose(gp[0]+(i%2-.5)*2.0,0,gp[1]+(Math.floor(i/2)-.5)*2.2,i*1.8,i===3?.64:1),info:[i,0,0,0]}));meshes.goats=new Mesh(renderer,goatGeometry(),{name:'Goats',instances:goatInstances,dynamic:true});
+ const goatInstances=Array.from({length:3},(_,i)=>({matrix:M.compose(gp[0]+(i%2-.5)*2.0,0,gp[1]+(Math.floor(i/2)-.5)*2.2,i*1.8),info:[i,0,0,0]}));meshes.goats=new Mesh(renderer,goatGeometry(),{name:'Goats',instances:goatInstances,dynamic:true});
   const kamanyanRoute=[[29,58],[29,65],[28,72],[30,74],[31,69],[31,61],[29,58]];
   const kamanyanStart=nearestWalkable(kamanyanRoute[0],2)||kamanyanRoute[0];
   const kamanyan={x:kamanyanStart[0],z:kamanyanStart[1],yaw:0,index:1,speed:.56};
@@ -1198,7 +1222,7 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
    meshes.kamanyan.instances[0].matrix=M.compose(kamanyan.x,walkHeight(kamanyan.x,kamanyan.z)+Math.max(0,Math.sin(time*7))*.025,kamanyan.z,kamanyan.yaw,.82);
    meshes.kamanyan.instances[0].info[1]=walking?.65:0;
    meshes.kamanyan.updateInstances();
-   positionCar(carDistance??(time*.88+carOffset));if(time-lastActorUpdate>.055){let elapsed=Math.min(.18,time-lastActorUpdate);lastActorUpdate=time;for(let a of actorPlans){if(a.type==='game-child'&&!a.hidden){moveGameChild(a,time);continue;}if(a.walk&&a.path&&!a.hidden){let dest=a.path[a.pathIndex],dx=dest[0]-a.x,dz=dest[1]-a.z,dist=Math.hypot(dx,dz);if(dist<.35)a.pathIndex=(a.pathIndex+1)%a.path.length;else{let nx=a.x+dx/dist*a.speed*elapsed,nz=a.z+dz/dist*a.speed*elapsed;if(isWalkable(nx,nz,.19)){a.x=nx;a.z=nz;a.yaw=Math.atan2(dx,dz);}else a.pathIndex=(a.pathIndex+1)%a.path.length;}}let y=walkHeight(a.x,a.z),yaw=a.yaw;if(a.type==='performer'){yaw=Math.sin(time*.5+a.index*.3)*.12;y+=.04+Math.max(0,Math.sin(time*2.4+a.index*.4))*.07;}a.instance.matrix=M.compose(a.x,a.hidden?-100:y,a.z,yaw,a.scale);a.instance.info[1]=a.hidden?0:a.walk?(a.type==='performer'?.8:1):0;}meshes.actors.forEach(m=>m.updateInstances());meshes.children.forEach(m=>m.updateInstances());goatInstances.forEach((v,i)=>{let a=i*1.8+Math.sin(time*.1+i)*.3;v.matrix=M.compose(gp[0]+(i%2-.5)*2.0+Math.sin(time*.1+i)*.2,0,gp[1]+(Math.floor(i/2)-.5)*2.2,a,i===3?.64:1);});meshes.goats.updateInstances();}}
+   positionCar(carDistance??(time*.88+carOffset));if(time-lastActorUpdate>.055){let elapsed=Math.min(.18,time-lastActorUpdate);lastActorUpdate=time;for(let a of actorPlans){if(a.type==='game-child'&&!a.hidden){moveGameChild(a,time);continue;}if(a.walk&&a.path&&!a.hidden){let dest=a.path[a.pathIndex],dx=dest[0]-a.x,dz=dest[1]-a.z,dist=Math.hypot(dx,dz);if(dist<.35)a.pathIndex=(a.pathIndex+1)%a.path.length;else{let nx=a.x+dx/dist*a.speed*elapsed,nz=a.z+dz/dist*a.speed*elapsed;if(isWalkable(nx,nz,.19)){a.x=nx;a.z=nz;a.yaw=Math.atan2(dx,dz);}else a.pathIndex=(a.pathIndex+1)%a.path.length;}}let y=walkHeight(a.x,a.z),yaw=a.yaw;if(a.type==='performer'){yaw=Math.sin(time*.5+a.index*.3)*.12;y+=.04+Math.max(0,Math.sin(time*2.4+a.index*.4))*.07;}a.instance.matrix=M.compose(a.x,a.hidden?-100:y,a.z,yaw,a.scale);a.instance.info[1]=a.hidden?0:a.walk?(a.type==='performer'?.8:1):0;}meshes.actors.forEach(m=>m.updateInstances());meshes.children.forEach(m=>m.updateInstances());goatInstances.forEach((v,i)=>{let a=i*1.8+Math.sin(time*.1+i)*.3;v.matrix=M.compose(gp[0]+(i%2-.5)*2.0+Math.sin(time*.1+i)*.2,0,gp[1]+(Math.floor(i/2)-.5)*2.2,a);});meshes.goats.updateInstances();}}
  progress(.90,'歩行できる経路を確認しています');
  function positionCar(distance){
   carState=sampleTrack(distance);
