@@ -25,7 +25,18 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  atlas.add('tire',(c,s)=>{c.fillStyle='#2b2b2a';c.fillRect(0,0,s,s);c.strokeStyle='#484948';c.lineWidth=5;for(let y=0;y<s;y+=27){c.beginPath();c.moveTo(0,y);c.lineTo(s*.5,y+15);c.lineTo(s,y);c.stroke();}});
  atlas.add('cloth',(c,s)=>{c.fillStyle='#eeeadf';c.fillRect(0,0,s,s);c.fillStyle='rgba(83,117,120,.12)';for(let i=0;i<s;i+=40){c.fillRect(i,0,18,s);c.fillRect(0,i,s,18);}});
  const categoryColors={F:'#a64c35',S:'#385e76',T:'#4e6c43',P:'#83503e',M:'#c39343',I:'#27595c'};
-  const signFor={};for(let rec of [...data.records.filter(r=>!['unplaced','performer','unconfirmed','workshop'].includes(r.kind)),...data.locations]){signFor[rec.id]={banner:atlas.banner(rec.id.startsWith('F-')||rec.id.startsWith('S-')||rec.id.startsWith('T-')?rec.id:({HQ:'INFO',GYM:'STAGE',MOBILITY:'RIDE',MEET:'REST',OUTSTAGE:'STAGE',GATE_MAIN:'WELCOME',GATE_WEST:'WELCOME',WC:'WC',WC_ART:'WC',OUTDOOR_GAMES:'T-14',EAT2:'REST'}[rec.id]||'FESTA'),rec.id==='MOBILITY'?'モビリティー':rec.short,rec.id==='S-13'?'子どもくじ抽選会':rec.caption,categoryColors[rec.category]),menu:atlas.sign(rec.id+'-menu',rec.short,rec.detail,categoryColors[rec.category],rec.id+'   '+(rec.status||'予定'))};}
+ const signFor={};
+ for(const rec of [...data.records.filter(r=>!['unplaced','performer','unconfirmed','workshop'].includes(r.kind)),...data.locations]){
+  const {id,short,detail,category,status}=rec,accent=categoryColors[category];
+  const bannerId=id.startsWith('F-')||id.startsWith('S-')||id.startsWith('T-')?id:({HQ:'INFO',GYM:'STAGE',MOBILITY:'RIDE',MEET:'REST',OUTSTAGE:'STAGE',GATE_MAIN:'WELCOME',GATE_WEST:'WELCOME',WC:'WC',WC_ART:'WC',OUTDOOR_GAMES:'T-14',EAT2:'REST'}[id]||'FESTA');
+  const banner=atlas.banner(bannerId,id==='MOBILITY'?'モビリティー':short,id==='S-13'?'子どもくじ抽選会':rec.caption,accent);
+  const header=status&&status!=='予定'?id+'   '+status:id;
+  const menu=atlas.sign(id+'-menu',rec.signName??short,rec.signDetail??rec.detailText??detail,accent,header);
+  signFor[id]={banner,menu};
+  if(rec.kind==='tent'&&category==='T'){
+   signFor[id].tentMenu=atlas.sign(id+'-tent-menu',short,detail,accent,id+'   '+(status||'予定'));
+  }
+ }
  const schoolSign=atlas.banner('西鎌倉','鎌倉市立西鎌倉小学校','つながりフェスタ＠にしかま2026','#415d60');
  const mainWelcome=atlas.banner('2026','つながりフェスタ＠にしかま','つながる、みつかる、すきになる','#356064');
  const warningSign=atlas.sign('走行エリア','モビリティー','実走路の中へは入れません。\n見学はトラロープの外側から。','#a74d38','車両実走路');
@@ -440,8 +451,14 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  function tent(rec,override=null){let pos=override||rec.pos,w=rec.width||3.02,d=rec.depth||2.75,yaw=rec.yaw||0;let roofTint=rec.id==='S-3'||rec.id==='S-9'?'#8393a0':rec.id==='F-11'?'#859690':'#f8f7ef';let band=mat(categoryColors[rec.category],6,.92);one.scope(M.compose(pos[0],0,pos[1],yaw),()=>{tentRoof(one,w,d,mat(roofTint,6,.92));for(let x of rec.id==='F-10'?[-w/2+.035,0,w/2-.035]:[-w/2+.035,w/2-.035])for(let z of [-d/2+.035,d/2-.035])one.cylinder([x,.03,z],[x,2.2,z],.029,.026,m.metal,8);one.box(0,2.10,d/2,w,.29,.026,band);one.box(0,2.1,-d/2,w,.29,.025,mat(roofTint,6));for(let x of [-w/2,w/2])one.box(x,2.1,0,.025,.29,d,mat(roofTint,6));one.cylinder([-w/2,2.17,-d/2],[w/2,2.17,d/2],.021,.021,m.metal,8);one.cylinder([w/2,2.17,-d/2],[-w/2,2.17,d/2],.021,.021,m.metal,8);
     // Back sheet for alternate stalls, not a solid interior box.
     if(rec.category==='F'||rec.id==='HQ')one.box(0,1.15,-d/2,w,1.87,.015,mat('#eeeee5',6,.94));});
+   const bowling=rec.id==='T-14';
    details.scope(M.compose(pos[0],0,pos[1],yaw),()=>{
-    if(rec.id==='F-10'){
+    if(bowling){
+     table(details,-1.35,.91,1.85,.60);
+     details.scope(M.compose(-1.35,0,.67),()=>goods(details,rec));
+     chair(details,-.08,1.18,0,'#65746c');
+     details.box(-2.70,.23,1.29,.47,.42,.40,mat('#af9270',5));
+    }else if(rec.id==='F-10'){
      table(details,-1.5,.40,2.28,.73);
      table(details,1.5,.40,2.28,.73);
      details.scope(M.compose(-1.5,0,0),()=>goods(details,rec));
@@ -456,11 +473,15 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
      goods(details,rec);chair(details,-.65,-.53,0,'#65746c');
      details.box(.75,.23,-.46,.54,.42,.40,mat('#af9270',5));
     }
-    if(rec.category==='T')details.sign(.56,1.5,-1.25,.95,.98,signFor[rec.id].menu,true);
+    if(rec.category==='T')details.sign(.56,1.5,-1.25,.95,.98,signFor[rec.id].tentMenu,true);
    });
    signGeo.scope(M.compose(pos[0],0,pos[1],yaw),()=>{selectableSign(rec.id,()=>signGeo.sign(0,2.15,d/2+.03,Math.min(w-.09,2.87),.62,signFor[rec.id].banner));selectableSign(rec.id,()=>aframe(signGeo,-w/2+.20,d/2+.40,signFor[rec.id].menu,-.14));});
-   // Counters and canopy uprights block walking; the front of the stall remains approachable.
-   let front=[Math.sin(yaw),Math.cos(yaw)],side=[Math.cos(yaw),-Math.sin(yaw)];let tx=pos[0]+front[0]*.40,tz=pos[1]+front[1]*.40;addBoxCollider(tx,tz,Math.abs(side[0])*(w-.4)+Math.abs(front[0])*.8,Math.abs(side[1])*(w-.4)+Math.abs(front[1])*.8,rec.id);
+   // Counters block walking; leave the entrance to the bowling lane open.
+   const front=[Math.sin(yaw),Math.cos(yaw)],side=[Math.cos(yaw),-Math.sin(yaw)];
+   const tableX=bowling?-1.35:0,tableZ=bowling?.91:.40;
+   const tableWidth=bowling?1.85:w-.4,tableDepth=bowling?.60:.8;
+   const tx=pos[0]+side[0]*tableX+front[0]*tableZ,tz=pos[1]+side[1]*tableX+front[1]*tableZ;
+   addBoxCollider(tx,tz,Math.abs(side[0])*tableWidth+Math.abs(front[0])*tableDepth,Math.abs(side[1])*tableWidth+Math.abs(front[1])*tableDepth,rec.id);
    rec.approach=[pos[0]+front[0]*(d/2+3.1),pos[1]+front[1]*(d/2+3.1)];rec.marker=[pos[0]+front[0]*1.4,3.22,pos[1]+front[1]*1.4];markers.push(rec);
   }
  function wheel(geo,x,y,z,side=1,r=.37){geo.cylinder([x,y,z-.09],[x,y,z+.09],r,r,m.tire,22);geo.cylinder([x,y,z+side*.094],[x,y,z+side*.114],r*.55,r*.55,m.metal,20);for(let i=0;i<6;i++){let a=i/6*TAU;geo.cylinder([x+Math.cos(a)*r*.34,y+Math.sin(a)*r*.34,z+side*.115],[x+Math.cos(a)*r*.34,y+Math.sin(a)*r*.34,z+side*.12],r*.12,r*.12,m.dark,7);}}
@@ -890,25 +911,32 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
 
  const outdoorGames=data.locations.find(r=>r.id==='OUTDOOR_GAMES');
  const [gamesX,gamesZ]=outdoorGames.pos;
+ const tactileTransform=M.compose(gamesX,0,gamesZ);
+ const bowlingBooth=data.records.find(r=>r.id==='T-14');
+ // The lane runs along the width of the tent, behind the counter.
+ const bowlingYaw=bowlingBooth.yaw+Math.PI/2;
+ const bowlingTransform=M.multiply(M.compose(bowlingBooth.pos[0],0,bowlingBooth.pos[1],bowlingBooth.yaw),M.compose(0,0,-.72,Math.PI/2));
  const bowlingPinGeo=new Geometry(),bowlingBallGeo=new Geometry(),tactilePlayerGeo=new Geometry();
  const bowlingPins=[];
  {
   const [x,z]=outdoorGames.pos;
   const lane=mat('#c1ab88',1,.94),mark=mat('#f2ebd8'),tile=mat('#d9ac30',0,.92);
   const bottle=mat('#b9cbd0',0,.33,.22),cap=mat('#3a6c79'),ball=mat('#a94e38',0,.62);
-  details.scope(M.compose(x,0,z,0),()=>{
-   details.box(-1.55,.064,0,1.72,.036,5.0,lane);
-   details.box(-1.55,.086,2.20,1.62,.01,.06,mark);
-   bowlingPinGeo.cylinder([0,0,0],[0,.198,0],.064,.062,bottle,12);
-   bowlingPinGeo.cylinder([0,.198,0],[0,.245,0],.062,.026,bottle,12);
-   bowlingPinGeo.cylinder([0,.245,0],[0,.273,0],.029,.029,cap,12);
-   bowlingPinGeo.cylinder([0,.06,0],[0,.127,0],.066,.066,cap,12);
-   for(let row=0;row<3;row++)for(let i=0;i<=row;i++){
-    bowlingPins.push({x:-1.55+(i-row/2)*.24,z:-1.65-row*.23,row});
-   }
-   bowlingBallGeo.sphere(0,0,0,.133,.133,.133,ball,18,10);
-   bowlingBallGeo.cylinder([-.006,0,0],[.006,0,0],.134,.134,mark,18,false);
-   // The tactile path turns east at the north end, away from the bowling lane.
+  details.scope(bowlingTransform,()=>{
+   details.box(0,.064,0,1.36,.036,5.0,lane);
+   details.box(0,.086,2.20,1.26,.01,.06,mark);
+  });
+  bowlingPinGeo.cylinder([0,0,0],[0,.198,0],.064,.062,bottle,12);
+  bowlingPinGeo.cylinder([0,.198,0],[0,.245,0],.062,.026,bottle,12);
+  bowlingPinGeo.cylinder([0,.245,0],[0,.273,0],.029,.029,cap,12);
+  bowlingPinGeo.cylinder([0,.06,0],[0,.127,0],.066,.066,cap,12);
+  for(let row=0;row<3;row++)for(let i=0;i<=row;i++){
+   bowlingPins.push({x:(i-row/2)*.24,z:-1.65-row*.23,row});
+  }
+  bowlingBallGeo.sphere(0,0,0,.133,.133,.133,ball,18,10);
+  bowlingBallGeo.cylinder([-.006,0,0],[.006,0,0],.134,.134,mark,18,false);
+  details.scope(tactileTransform,()=>{
+   // The tactile path turns east at the north end.
    const cornerX=1.45,cornerZ=-2.6,tileSpacing=.40;
    const northSouthTiles=14,eastWestTiles=6;
    for(let i=0;i<northSouthTiles;i++){
@@ -1117,7 +1145,10 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  // Visitors waiting at known booths are behind the approach point so titles stay readable.
  for(let [ri,r] of markers.filter(r=>['F','S','T'].includes(r.category)&&r.approach).entries()){let yaw=r.yaw||0,side=ri%3?-1:1,q=r.approach,x=q[0]-Math.sin(yaw)*1.05+Math.cos(yaw)*.95*side,z=q[1]-Math.cos(yaw)*1.05-Math.sin(yaw)*.95*side;if(isWalkable(x,z,.2))actor(x,z,Math.atan2(r.pos[0]-x,r.pos[1]-z),false,R(.88,1.04));}
  // Clerks are static: avoid requiring route space behind every counter.
- for(let r of data.records.filter(r=>r.kind==='tent')){let yaw=r.yaw||0;let side=r.id==='F-10'?-1.5:0;actor(r.pos[0]+Math.cos(yaw)*side-Math.sin(yaw)*.52,r.pos[1]-Math.sin(yaw)*side-Math.cos(yaw)*.52,yaw,false,.93,null,'vendor');}
+ for(const r of data.records.filter(r=>r.kind==='tent')){
+  const yaw=r.yaw||0,side=r.id==='T-14'?-2.66:r.id==='F-10'?-1.5:0,front=r.id==='T-14'?.64:-.52;
+  actor(r.pos[0]+Math.cos(yaw)*side+Math.sin(yaw)*front,r.pos[1]-Math.sin(yaw)*side+Math.cos(yaw)*front,yaw,false,.93,null,'vendor');
+ }
  const strollRoutes=[[[0,10],[2,9],[2,-11],[20,-12],[26,-12],[26,-2],[26,12],[16,12],[0,10]],[[27,47],[29,54],[29,63],[31,68],[31,75],[28,77],[28,70],[29,60],[27,47]],[[-41,13],[-13,13],[-12,-4],[-15,-17],[-33,-19],[-41,13]],[[19,18],[26,21],[28,32],[29,44],[27,47],[28,32],[26,21],[19,18]]];
   // Keep the visitor count while spreading paths across walkable parts of each area.
   const lanes=[[-2.4,-2,-1.6],[-.8,0,.8,1.6,2.4,3.2],[-4,-3.2,-2.4,-2,-1.6,-.8,0,.8],[-3.2,-2.4,-1.6,-.8,0,.8,1.6,2.4,3.2,4]];
@@ -1136,14 +1167,17 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
  for(let q of [[7,11],[8,11.5],[24,-9],[25,-8.7],[-12,-23],[-13,-23.4],[-39,-44],[49,32],[50,33],[10,12],[11,12.4],[21,-10],[22,-10.4],[-10,-22],[-11,-22.4],[-37,-42],[47,34],[48,35]])if(isWalkable(...q,.23))actor(q[0],q[1],R(0,TAU),false,R(.85,1.0));
  // Children waiting around both activities stay clear of the bowling lane and tactile blocks.
  const gameGroups=[
-  {target:[-1.55,.20],children:[[-2.96,1.44],[-2.92,.50],[-2.94,-.44],[-1.55,2.98],[-.40,-.70],[-.05,1.53]]},
-  {target:[1.45,-.5],children:[[.57,2.21],[2.24,2.46],[2.36,1.60],[2.35,.63],[.56,-1.52],[2.38,-1.61]]}
+  {transform:bowlingTransform,yaw:bowlingYaw,target:[0,.20],children:[
+   [-1.02,-2.18],[-1.02,-1.44],[-1.02,-.70],[0,2.62,true],[-1.02,.12],[-1.02,.89]
+  ]},
+  {transform:tactileTransform,yaw:0,target:[1.45,-.5],children:[[.57,2.21],[2.24,2.46],[2.36,1.60],[2.35,.63],[.56,-1.52],[2.38,-1.61]]}
  ];
- for(const {target,children} of gameGroups){
-  for(const [x,z] of children){
-   if(isWalkable(gamesX+x,gamesZ+z,.19)){
-    const child=actor(gamesX+x,gamesZ+z,Math.atan2(target[0]-x,target[1]-z),false,R(.88,1.10),null,'game-child');
-    child.bowler=x===-1.55&&z===2.98;
+ for(const {transform,yaw,target,children} of gameGroups){
+  for(const [x,z,bowler=false] of children){
+   const [worldX,,worldZ]=M.transform(transform,[x,0,z]);
+   if(isWalkable(worldX,worldZ,.19)){
+    const child=actor(worldX,worldZ,yaw+Math.atan2(target[0]-x,target[1]-z),false,R(.88,1.10),null,'game-child');
+    child.bowler=bowler;
    }
   }
  }
@@ -1187,11 +1221,11 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
 
   const cycle=crowdAmount>0?time%9.5:0,roll=portion(cycle,1.9,4.25);
   const ball=meshes.bowlingBall.instances[0],distance=4.48*roll;
-  ball.matrix=M.multiply(M.compose(gamesX-1.55,roll<1?.22:-100,gamesZ+2.3-distance),rollX(-distance/.133));
+  ball.matrix=M.multiply(bowlingTransform,M.multiply(M.compose(0,roll<1?.22:-100,2.3-distance),rollX(-distance/.133)));
   meshes.bowlingBall.updateInstances();
   bowlingPins.forEach(({x,z,row},i)=>{
    const tip=portion(cycle,3.92+row*.12,4.37+row*.12);
-   meshes.bowlingPins.instances[i].matrix=M.multiply(M.compose(gamesX+x,.087,gamesZ+z-.13*tip),rollX(-tip*1.48));
+   meshes.bowlingPins.instances[i].matrix=M.multiply(bowlingTransform,M.multiply(M.compose(x,.087,z-.13*tip),rollX(-tip*1.48)));
   });
   meshes.bowlingPins.updateInstances();
  }
@@ -1201,7 +1235,9 @@ window.buildFestaWorld = async function(renderer,progress=()=>{}) {
   if(a.bowler){
    const cycle=time%9.5;
    const approach=portion(cycle,.55,1.9),retreat=portion(cycle,5.1,6.7);
-   z-=.83*(approach-retreat);
+   const distance=.57*(approach-retreat);
+   x+=Math.sin(yaw)*distance;
+   z+=Math.cos(yaw)*distance;
    step=cycle>.55&&cycle<1.9||cycle>5.1&&cycle<6.7?.83:.18;
   }else{
    x+=.095*Math.sin(phase);
