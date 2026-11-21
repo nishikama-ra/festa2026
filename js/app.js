@@ -218,7 +218,7 @@ import {tourStart,tourSteps} from './tour.js';
    if(canGo)html+='<div class="detail-actions"><button class="primary" id="navigateHere">'+icon('route')+' 歩いて案内</button><button class="secondary" id="jumpHere">この場所へ移動</button></div>';else html+=r.kind==='unconfirmed'?'<div class="note-box warn">今回の体育館の開始予定9件に記載がなく、出演予定は未確認です。</div>':r.kind==='unplaced'?'<div class="note-box warn">参加予定団体一覧には記載がありますが、配置図からワークショップの位置を特定できません。推測でブースを追加していません。</div>':'<div class="note-box">3D表示が起動していないため、ここでは移動機能を利用できません。団体の予定内容は読めます。</div>';
    if(r.id==='MOBILITY')html+='<p class="source-text">電動トライク1台。車体色、走行速度は実際と異なる場合があります。</p>';
   const description=data.exhibitorDescriptions?.[id];
-  const content=description&&id==='T-4'?description:[r.detail,description].filter(Boolean).join('\n\n');
+  const content=description&&id==='T-4'?description:[r.detailText??r.detail,description].filter(Boolean).join('\n\n');
   if(r.id!=='GYM')html+='<div class="section-label">'+(r.category==='P'?'参加予定内容':'内容')+'</div><div class="detail-content">'+esc(content)+'</div>';
   html+=exhibitorLink(id);
   if(r.category==='F'||r.category==='S')html+='<div class="note-box">3Dで置かれている商品は実物や販売数量を示すものではありません。</div>';
