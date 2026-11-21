@@ -180,7 +180,25 @@ if((festaMat.x>.5 && festaMat.x<1.5)||(festaMat.x>2.5 && festaMat.x<4.5)){
    this.frameCount++;const now=performance.now();if(now-this.fpsStamp>1500){this.stats.fps=Math.round(this.frameCount*1000/(now-this.fpsStamp));this.frameCount=0;this.fpsStamp=now;}
   }
   project(pos){if(!this.vp)return null;const m=this.vp,p=M.transform(m,pos),w=m[3]*pos[0]+m[7]*pos[1]+m[11]*pos[2]+m[15];if(w<=0)return null;return{x:(p[0]/w*.5+.5)*this.canvas.clientWidth,y:(-p[1]/w*.5+.5)*this.canvas.clientHeight,z:p[2]/w};}
-  groundPoint(x,y){if(!this.invVp)return null;const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(x/this.canvas.clientWidth*2-1,1-y/this.canvas.clientHeight*2),this.threeCamera);const point=ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),0),new THREE.Vector3());return point?.toArray()||null;}
+  screenRay(x,y){
+   if(!this.invVp)return null;
+   const ray=new THREE.Raycaster();
+   ray.setFromCamera(new THREE.Vector2(x/this.canvas.clientWidth*2-1,1-y/this.canvas.clientHeight*2),this.threeCamera);
+   return ray;
+  }
+  groundPoint(x,y){
+   const ray=this.screenRay(x,y);
+   const point=ray?.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),0),new THREE.Vector3());
+   return point?.toArray()||null;
+  }
+  signFace(x,y,signs,occluders){
+   const ray=this.screenRay(x,y);
+   const hit=ray?.intersectObject(signs.object,false)[0];
+   if(!hit)return null;
+   ray.far=hit.distance-.001;
+   const blocked=ray.intersectObjects(occluders.filter(mesh=>mesh.visible).map(mesh=>mesh.object),false).length;
+   return blocked?null:hit.faceIndex;
+  }
  }
 
  return {V,M,Geometry,Mesh,Renderer,Atlas,material,color,rng,clamp,TAU,wrap};
