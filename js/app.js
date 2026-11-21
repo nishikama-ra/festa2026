@@ -1,5 +1,6 @@
 /* UI, movement and spatial guide. No analytics, cookies, external API or network calls. */
 'use strict';
+import {tourStart,tourSteps} from './tour.js';
 (async function(){
  const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const icons={search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',overview:'<path d="m3 8 9-5 9 5-9 5-9-5Z M3 12l9 5 9-5M3 16l9 5 9-5"/>',route:'<circle cx="5" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 5h8a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h5"/>',settings:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor"/><circle cx="16" cy="12" r="2" fill="currentColor"/><circle cx="8" cy="18" r="2" fill="currentColor"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.3 9a2.8 2.8 0 0 1 5.4 1c0 2-2.7 2-2.7 4M12 17h.01"/>',arrow:'<path d="M4 12h15m-5-5 5 5-5 5"/>',back:'<path d="M20 12H5m5-5-5 5 5 5"/>',close:'<path d="m6 6 12 12M6 18 18 6"/>',expand:'<path d="M9 3H3v6M15 3h6v6M3 15v6h6M21 15v6h-6"/>',walk:'<circle cx="13" cy="4" r="2"/><path d="m11 9 3 2 4 1M11 8l-3 5-4 1M11 9l-1 7-4 5m4-5 5 1 2 5"/>',pin:'<path d="M19 10c0 6-7 12-7 12S5 16 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>'};
@@ -12,7 +13,7 @@
  function categoryName(r){return locationIds.has(r.id)?venueNames[r.category]:categoryNames[classification(r)];}
  const mobile=matchMedia('(pointer:coarse)').matches||innerWidth<650,reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  let renderer,world,nav,ready=false,lastFrame=0,animTime=0,uiTimer=0,toastTimeout,focusBefore=null;
- const state={mode:'welcome',pos:[0,11],yaw:.10,pitch:0,orbitYaw:-.48,orbitPitch:.79,orbitDist:115,orbitTarget:[0,0,22],returnPos:null,selected:null,nearest:null,path:null,pathIndex:1,auto:false,targetId:null,labels:true,showRoof:true,paused:false,sheet:null,crowd:70,light:'day',distanceWalked:0,rideYaw:0,boardingStop:null,runMode:false,quality:mobile?'standard':'high'};
+ const state={mode:'welcome',pos:[0,11],yaw:.10,pitch:0,orbitYaw:-.48,orbitPitch:.79,orbitDist:115,orbitTarget:[0,0,22],returnPos:null,selected:null,nearest:null,path:null,pathIndex:1,auto:false,targetId:null,labels:true,showRoof:true,paused:false,sheet:null,crowd:70,light:'day',distanceWalked:0,rideYaw:0,boardingStop:null,tour:null,runMode:false,quality:mobile?'standard':'high'};
  const keys={},joy={x:0,y:0,active:false,pid:null},drag={active:false,pid:null,x:0,y:0,moved:0};let routeMesh=null;
  const visitSet=new Set(),labelElements=new Map();
  function toast(s,ms=4000){$('toast').textContent=s;$('toast').classList.remove('hidden');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>$('toast').classList.add('hidden'),ms);}
@@ -21,16 +22,31 @@
  function hideWelcome(){state.mode='walk';$('welcome').classList.add('hidden');$('hud').classList.remove('hidden');$('minimapWrap').classList.remove('hidden');$('bottomHint').classList.remove('hidden');$('joystick').classList.remove('hidden');if(mobile)$('lookHint').classList.remove('hidden');$('scene').focus({preventScroll:true});}
  function lookAt(q){state.yaw=Math.atan2(q[0]-state.pos[0],-(q[1]-state.pos[1]));state.pitch=-.02;}
  function setPosition(q){if(!world)return;state.pos=world.nearestWalkable(q)||[0,11];}
- function start(entry='field'){if(!ready)return;closeSheet();closeMap();stopRoute();hideWelcome();if(entry==='field'){setPosition([2.8,11.0]);lookAt([14,-14]);}else{let r=byId[entry];setPosition(r.approach);lookAt(entry==='GATE_MAIN'?data.layout.mainGateLook:[-27,-24]);}state.mode='walk';updateMode();toast(mobile?'左の丸で移動。画面の右側をドラッグすると見回せます。':'左の丸、キーボードのWASD または矢印キーで移動。画面をドラッグして見回します。',4500);}
- function showWelcome(){if(!ready)return;closeSheet();closeMap();stopRoute();state.mode='welcome';$('welcome').classList.remove('hidden');$('minimapWrap').classList.add('hidden');$('bottomHint').classList.add('hidden');$('nearby').classList.add('hidden');$('joystick').classList.add('hidden');$('lookHint').classList.add('hidden');updateMode();}
- function toOverview(){if(!ready)return;closeSheet();closeMap();if(state.mode==='overview'){state.mode='walk';if(state.returnPos)state.pos=[...state.returnPos];state.pitch=0;updateMode();return;}if(state.mode==='welcome')hideWelcome();stopRoute();state.returnPos=[...state.pos];state.mode='overview';state.orbitTarget=[0,0,23];state.orbitDist=158;state.orbitYaw=-.27;state.orbitPitch=.90;updateMode();toast('ドラッグで回転、ホイールで拡大。地面を押すとその場所へ移動します。ブースの札を押すと内容を表示します。');}
- function updateMode(){let mode=state.mode;if(world)world.setRideView(mode==='ride');$('modeBar').classList.toggle('ride-active',mode==='ride');$('speedToggle').classList.toggle('hidden',mobile||mode!=='walk');$('speedToggle').textContent=state.runMode?'速度：走る':'速度：歩く';$('speedToggle').setAttribute('aria-pressed',String(state.runMode));$('speedToggle').setAttribute('aria-label',state.runMode?'走るを選択中。歩くに切り替える':'歩くを選択中。走るに切り替える');$('overviewBtn').classList.toggle('active',mode==='overview');$('joystick').classList.toggle('hidden',mode!=='walk'||!!state.sheet);$('lookHint').classList.toggle('hidden',!mobile||mode!=='walk'||!!state.sheet);$('modeBar').classList.toggle('hidden',mode==='welcome'||(mode==='walk'&&!state.path));
-  if(mode==='overview'){$('modeText').textContent='上空から会場を見る';$('modeAction').textContent='歩行に戻る';}
+ function start(entry='field'){if(!ready)return;pauseTour();closeSheet();closeMap();stopRoute();hideWelcome();if(entry==='field'){setPosition([2.8,11.0]);lookAt([14,-14]);}else{let r=byId[entry];setPosition(r.approach);lookAt(entry==='GATE_MAIN'?data.layout.mainGateLook:[-27,-24]);}state.mode='walk';updateMode();toast(mobile?'左の丸で移動。画面の右側をドラッグすると見回せます。':'左の丸、キーボードのWASD または矢印キーで移動。画面をドラッグして見回します。',4500);}
+ function showWelcome(){if(!ready)return;pauseTour();closeSheet();closeMap();stopRoute();state.mode='welcome';$('welcome').classList.remove('hidden');$('minimapWrap').classList.add('hidden');$('bottomHint').classList.add('hidden');$('nearby').classList.add('hidden');$('joystick').classList.add('hidden');$('lookHint').classList.add('hidden');updateMode();}
+ function toOverview(){if(!ready)return;pauseTour();closeSheet();closeMap();if(state.mode==='overview'){state.mode='walk';if(state.returnPos)state.pos=[...state.returnPos];state.pitch=0;updateMode();return;}if(state.mode==='welcome')hideWelcome();stopRoute();state.returnPos=[...state.pos];state.mode='overview';state.orbitTarget=[0,0,23];state.orbitDist=158;state.orbitYaw=-.27;state.orbitPitch=.90;updateMode();toast('ドラッグで回転、ホイールで拡大。地面を押すとその場所へ移動します。ブースの札や看板を押すと詳細を表示します。');}
+ function tourRidePaused(){
+  const paused=state.tour?.paused;
+  return paused?.holdRide&&state.mode==='ride';
+ }
+ function tourControls(){
+  const tour=state.tour;
+  return tour&&(!tour.paused||(state.mode==='walk'&&!state.path)||tourRidePaused());
+ }
+ function updateMode(){let mode=state.mode,tour=state.tour,controls=tourControls(),running=!!tour&&!tour.paused;
+  $('tourBtn').classList.toggle('active',running);
+  $('tourBtn').setAttribute('aria-pressed',String(running));
+  $('tourBtn').setAttribute('aria-label',!tour?'自動ツアーを開始':running?'自動ツアーを一時停止':'自動ツアーを再開');
+  $('welcomeTour').firstChild.nodeValue=tour?'自動ツアーを再開 ':'自動ツアー ';
+  $('modeExit').setAttribute('aria-label',controls?'自動ツアーを終了':'現在の移動を終了');
+  if(world)world.setRideView(mode==='ride');$('modeBar').classList.toggle('ride-active',mode==='ride');$('speedToggle').classList.toggle('hidden',mobile||mode!=='walk'||!!controls);$('speedToggle').textContent=state.runMode?'速度：走る':'速度：歩く';$('speedToggle').setAttribute('aria-pressed',String(state.runMode));$('speedToggle').setAttribute('aria-label',state.runMode?'走るを選択中。歩くに切り替える':'歩くを選択中。走るに切り替える');$('overviewBtn').classList.toggle('active',mode==='overview');$('joystick').classList.toggle('hidden',mode!=='walk'||!!state.sheet);$('lookHint').classList.toggle('hidden',!mobile||mode!=='walk'||!!state.sheet);$('modeBar').classList.toggle('hidden',mode==='welcome'||(mode==='walk'&&!state.path&&!controls));
+  if(controls){$('modeText').textContent=running?'自動ツアー中':'自動ツアーを一時停止中';$('modeAction').textContent=running?'一時停止':'再開';}
+  else if(mode==='overview'){$('modeText').textContent='上空から会場を見る';$('modeAction').textContent='歩行に戻る';}
   else if(mode==='ride'){$('modeText').textContent='トゥクトゥクに乗車中';$('modeAction').textContent='トゥクトゥクから降りる';}
   else if(state.path){let r=byId[state.targetId];$('modeText').textContent=(state.auto?'歩いて案内中：':'経路表示：')+(r?r.short:'選択した場所');$('modeAction').textContent=state.auto?'一時停止':'自動で歩く';}}
  function resolveLocation(r){return r.kind==='performer'||r.id==='T-SCI'?byId.GYM:r;}
- function routeTo(id,auto=true){if(!ready)return;let r=typeof id==='string'?resolveLocation(byId[id]):null,end=r?.approach||(!r&&Array.isArray(id)?id:null);if(!end){toast('この団体のブース位置は資料で特定できていません。');return false;}if(state.mode==='welcome')start('field');if(state.mode==='ride'){state.mode='walk';setPosition(byId.MOBILITY.approach);}state.mode='walk';let path=nav.find(state.pos,end);if(!path){toast('ここから歩ける経路を見つけられませんでした。「この場所へ移動」で見学できます。',6000);return false;}state.path=path;state.pathIndex=1;state.auto=auto;state.targetId=r?.id||null;showRoute(path);closeSheet();closeMap();updateMode();return true;}
- function teleport(id){let r=resolveLocation(byId[id]);if(!r?.approach)return false;if(state.mode==='welcome')hideWelcome();stopRoute();state.mode='walk';setPosition(r.approach);lookAt(r.pos);if(r.id==='GATE_MAIN')lookAt(data.layout.mainGateLook);if(r.id==='GATE_WEST')lookAt([-27,-24]);if(r.id==='GYM'){lookAt([r.pos[0],world.p(525,345)[1]]);}if(r.id==='WC'){lookAt([45,45]);}closeSheet();closeMap();updateMode();toast(r.short+' に移動しました');return true;}
+ function routeTo(id,auto=true){if(!ready)return;let r=typeof id==='string'?resolveLocation(byId[id]):null,end=r?.approach||(!r&&Array.isArray(id)?id:null);if(!end){toast('この団体のブース位置は資料で特定できていません。');return false;}pauseTour();if(state.mode==='welcome')start('field');if(state.mode==='ride'){state.mode='walk';setPosition(byId.MOBILITY.approach);}state.mode='walk';let path=nav.find(state.pos,end);if(!path){toast('ここから歩ける経路を見つけられませんでした。「この場所へ移動」で見学できます。',6000);return false;}state.path=path;state.pathIndex=1;state.auto=auto;state.targetId=r?.id||null;showRoute(path);closeSheet();closeMap();updateMode();return true;}
+ function teleport(id){let r=resolveLocation(byId[id]);if(!r?.approach)return false;pauseTour();if(state.mode==='welcome')hideWelcome();stopRoute();state.mode='walk';setPosition(r.approach);lookAt(r.pos);if(r.id==='GATE_MAIN')lookAt(data.layout.mainGateLook);if(r.id==='GATE_WEST')lookAt([-27,-24]);if(r.id==='GYM'){lookAt([r.pos[0],world.p(525,345)[1]]);}if(r.id==='WC'){lookAt([45,45]);}closeSheet();closeMap();updateMode();toast(r.short+' に移動しました');return true;}
  function stopRoute(){state.path=null;state.auto=false;state.targetId=null;if(routeMesh){routeMesh.dispose();routeMesh=null;}updateMode();}
  function showRoute(path){if(routeMesh)routeMesh.dispose();const {Geometry,Mesh,material:mat}=FestaGL;let g=new Geometry();for(let i=0;i<path.length-1;i++){let a=path[i],b=path[i+1],dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz);if(l<.01)continue;let nx=-dz/l*.055,nz=dx/l*.055;g.quad([a[0]-nx,.088,a[1]-nz],[a[0]+nx,.088,a[1]+nz],[b[0]+nx,.088,b[1]+nz],[b[0]-nx,.088,b[1]-nz],mat('#b78134',0,.75,0,.13));for(let d=1;d<l;d+=2){let x=a[0]+dx*d/l,z=a[1]+dz*d/l;g.disk(x,.092,z,.12,mat('#dfbc77',0,.7,0,.2),10);}}let end=path[path.length-1];g.cylinder([end[0],.08,end[1]],[end[0],.15,end[1]],.26,.26,mat('#d2a558',0,.65,0,.2),30);routeMesh=new Mesh(renderer,g,{name:'Navigation guide',shadow:false});}
  function move(dx,dz){let n=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.15)),moved=0;for(let i=0;i<n;i++){let old=[...state.pos],nx=state.pos[0]+dx/n,nz=state.pos[1]+dz/n;if(world.isWalkable(nx,nz,.28))state.pos=[nx,nz];else{if(world.isWalkable(nx,state.pos[1],.28))state.pos[0]=nx;if(world.isWalkable(state.pos[0],nz,.28))state.pos[1]=nz;}moved+=Math.hypot(state.pos[0]-old[0],state.pos[1]-old[1]);}state.distanceWalked+=moved;return moved;}
@@ -38,15 +54,156 @@
  function arrive(){let id=state.targetId,r=byId[id];stopRoute();if(r){lookAt(r.pos);if(r.id==='GATE_MAIN')lookAt(data.layout.mainGateLook);if(r.id==='GATE_WEST')lookAt([-27,-24]);visitSet.add(id);toast(r.short+' に到着しました',2600);}}
  function angleDelta(x){return Math.atan2(Math.sin(x),Math.cos(x));}
  const rideButtons=[$('rideBubble'),$('rideBubble2')];
+ function beginRide(stop){
+  state.boardingStop=stop;
+  world.setCarStart(stop.distance,animTime);
+  state.mode='ride';state.rideYaw=0;state.pitch=-.06;
+ }
+ function leaveRide(stop=state.boardingStop){
+  state.mode='walk';setPosition(stop.rec.approach);lookAt(stop.position);state.boardingStop=null;
+ }
  function ride(stop){
   if(!ready||state.mode!=='walk'||!stop?.rec.approach)return;
-  closeSheet();stopRoute();state.boardingStop=stop;
-  world.setCarStart(stop.distance,animTime);
-  state.mode='ride';state.rideYaw=0;state.pitch=-.06;updateMode();
+  pauseTour();
+  if(state.tour)state.tour.paused.holdRide=false;
+  closeSheet();stopRoute();beginRide(stop);updateMode();
   toast('トゥクトゥクに乗っています。ドラッグして周囲を見回せます。車種・速度は演出です。',5500);
  }
- function exitMode(){if(state.mode==='overview'){state.mode='walk';if(state.returnPos)setPosition(state.returnPos);state.pitch=0;}else if(state.mode==='ride'){state.mode='walk';const stop=state.boardingStop;setPosition(stop.rec.approach);lookAt(stop.position);state.boardingStop=null;}else{stopRoute();}updateMode();}
- function showSheet(title,type){focusBefore=document.activeElement;state.sheet=type;$('sheetTitle').textContent=title;$('sheet').classList.remove('hidden');$('sheetScrim').classList.remove('hidden');$('sheetBack').classList.add('hidden');$('sheetBody').scrollTop=0;keysClear();updateMode();setTimeout(()=>$('sheetClose').focus({preventScroll:true}),0);}
+ function exitMode(){
+  if(tourControls()){stopTour();return;}
+  if(state.mode==='overview'){state.mode='walk';if(state.returnPos)setPosition(state.returnPos);state.pitch=0;}
+  else if(state.mode==='ride')leaveRide();
+  else stopRoute();
+  updateMode();
+ }
+ function startTour(){
+  if(!ready)return;
+  if(state.tour){
+   if(state.tour.paused)resumeTour();
+   else pauseTour();
+   return;
+  }
+  closeSheet();closeMap();stopRoute();keysClear();
+  if(state.mode==='ride')leaveRide();
+  if(state.mode==='welcome')hideWelcome();
+  state.mode='walk';setPosition(tourStart);
+  state.tour={steps:tourSteps(world,byId),index:-1};
+  nextTourStep();
+  const tour=state.tour;
+  if(setTourPath(tour,tour.step.points[0])){
+   const destination=tour.path.find(([x,z])=>Math.hypot(x-state.pos[0],z-state.pos[1])>=.10);
+   if(destination){lookAt(destination);state.pitch=0;}
+  }
+  clearTimeout(toastTimeout);$('toast').classList.add('hidden');
+ }
+ function pauseTour(){
+  const tour=state.tour;
+  if(!tour||tour.paused)return;
+  const {mode,pos,yaw,pitch,boardingStop,rideYaw}=state;
+  tour.paused={
+   view:{mode,pos:[...pos],yaw,pitch,boardingStop,rideYaw},
+   holdRide:mode==='ride',
+   carDistance:world.getCar().distance
+  };
+  keysClear();updateMode();
+ }
+ function resumeTour(){
+  const tour=state.tour,{view,carDistance}=tour.paused;
+  closeSheet();closeMap();stopRoute();keysClear();
+  if(state.mode==='welcome')hideWelcome();
+  Object.assign(state,view);
+  if(view.mode==='ride'){
+   world.setCarStart(carDistance,animTime);
+   tour.lastCarDistance=carDistance;
+  }
+  tour.paused=null;
+  clearTimeout(toastTimeout);$('toast').classList.add('hidden');
+  updateMode();
+ }
+ function stopTour(){
+  if(!state.tour)return;
+  state.tour=null;
+  if(state.mode==='ride')leaveRide();
+  updateMode();
+ }
+ function forwardDistance(from,to){
+  const diff=to-from;
+  return Math.abs(diff)<1e-6?0:diff<0?diff+world.trackLength:diff;
+ }
+ function nextTourStep(){
+  const tour=state.tour;
+  tour.index=(tour.index+1)%tour.steps.length;
+  tour.step=tour.steps[tour.index];
+  tour.pointIndex=0;
+  tour.path=null;
+  tour.elapsed=0;
+  tour.startYaw=state.yaw;
+  const step=tour.step;
+  if(step.kind==='ride'){
+   beginRide(step.from);
+   tour.lastCarDistance=world.getCar().distance;
+   tour.remainingRide=forwardDistance(step.from.distance,step.to.distance);
+  }
+  updateMode();
+ }
+ function turnTourCamera(yaw,dt){
+  const delta=angleDelta(yaw-state.yaw),limit=dt*1.05;
+  state.yaw+=Math.max(-limit,Math.min(limit,delta));
+  state.pitch=0;
+ }
+ function tourBlocked(){
+  stopTour();
+  toast('歩ける経路を見つけられなかったため、自動ツアーを停止しました。',6000);
+ }
+ function setTourPath(tour,point){
+  const path=nav.find(state.pos,point.position);
+  const end=path?.[path.length-1];
+  if(!end||Math.hypot(end[0]-point.position[0],end[1]-point.position[1])>.20)return false;
+  tour.path=path;
+  tour.pathIndex=0;
+  tour.walkYaw=null;
+  return true;
+ }
+ function tourWalk(tour,dt){
+  const point=tour.step.points[tour.pointIndex];
+  if(!point){nextTourStep();return;}
+  if(!tour.path&&!setTourPath(tour,point)){tourBlocked();return;}
+  const dest=tour.path[tour.pathIndex];
+  if(!dest){tour.pointIndex++;tour.path=null;return;}
+  const dx=dest[0]-state.pos[0],dz=dest[1]-state.pos[1],distance=Math.hypot(dx,dz);
+  if(distance<.10){tour.pathIndex++;tour.walkYaw=null;return;}
+  const heading=Math.atan2(dx,-dz);
+  if(tour.walkYaw===null){
+   const offset=angleDelta((point.yaw??heading)-heading),limit=Math.PI/7;
+   tour.walkYaw=heading+FestaGL.clamp(offset,-limit,limit);
+  }
+  turnTourCamera(tour.walkYaw,dt);
+  if(Math.abs(angleDelta(heading-state.yaw))>Math.PI/4)return;
+  const amount=Math.min(distance,dt*2.1);
+  if(move(dx/distance*amount,dz/distance*amount)<.0002&&amount>.001)tourBlocked();
+ }
+ function tickTour(dt){
+  const tour=state.tour,step=tour.step;
+  if(step.kind==='walk'){tourWalk(tour,dt);return;}
+  if(step.kind==='ride'){
+   const distance=world.getCar().distance;
+   tour.remainingRide-=forwardDistance(tour.lastCarDistance,distance);
+   tour.lastCarDistance=distance;
+   if(tour.remainingRide<.001){
+    leaveRide(step.to);
+    nextTourStep();
+   }
+   return;
+  }
+  tour.elapsed=Math.min(tour.elapsed+dt,step.duration);
+  if(step.kind==='turn'){
+   const progress=tour.elapsed/step.duration;
+   state.yaw=tour.startYaw+Math.PI*2*(progress*progress*(3-2*progress));
+  }else turnTourCamera(Math.atan2(step.look[0]-state.pos[0],state.pos[1]-step.look[1]),dt);
+  if(tour.elapsed>=step.duration)nextTourStep();
+ }
+
+ function showSheet(title,type){pauseTour();focusBefore=document.activeElement;state.sheet=type;$('sheetTitle').textContent=title;$('sheet').classList.remove('hidden');$('sheetScrim').classList.remove('hidden');$('sheetBack').classList.add('hidden');$('sheetBody').scrollTop=0;keysClear();updateMode();setTimeout(()=>$('sheetClose').focus({preventScroll:true}),0);}
  function closeSheet(){state.sheet=null;$('sheet').classList.add('hidden');$('sheetScrim').classList.add('hidden');updateMode();if(focusBefore&&focusBefore.isConnected)focusBefore.focus({preventScroll:true});}
  let searchQuery='',searchFilter='all';
  function showSearch(){showSheet('ブースを見つける','search');$('sheetBody').innerHTML='<div class="search-field">'+icon('search')+'<input id="searchInput" aria-label="団体名や内容から検索" placeholder="団体名・食べもの・体験から検索" value="'+esc(searchQuery)+'"></div><div class="filter-row">'+[['all','すべて'],...classifications,['I','会場案内']].map(([id,tx])=>'<button class="filter '+(id===searchFilter?'active':'')+'" data-filter="'+id+'">'+tx+'</button>').join('')+'</div><p class="result-count" id="resultCount"></p><p class="source-text">'+esc(data.notice)+'</p><div id="results"></div>';$('searchInput').addEventListener('input',e=>{searchQuery=e.target.value;renderResults();});$('sheetBody').querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{searchFilter=b.dataset.filter;$('sheetBody').querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));renderResults();});renderResults();setTimeout(()=>$('searchInput').focus(),30);}
@@ -54,7 +211,8 @@
  function showDetail(id,back=false){let r=byId[id];if(!r)return;state.selected=id;visitSet.add(id);showSheet('ブース・会場の詳細','detail');$('sheetBack').classList.toggle('hidden',!back);let loc=resolveLocation(r),canGo=ready&&!!loc.approach,category=categoryName(r);let html='<div class="detail-id"><span class="badge" style="background:'+colors[r.category]+'">'+esc(r.id.startsWith('P-')?'P':r.id.includes('-')?r.id:'案内')+'</span>'+esc(category)+'<span>／ '+'予定'+'</span></div><h3 class="detail-title">'+esc(r.name)+'</h3><p class="detail-caption">'+esc(r.caption)+'</p>';
    if(canGo)html+='<div class="detail-actions"><button class="primary" id="navigateHere">'+icon('route')+' 歩いて案内</button><button class="secondary" id="jumpHere">この場所へ移動</button></div>';else html+=r.kind==='unconfirmed'?'<div class="note-box warn">今回の体育館の開始予定9件に記載がなく、出演予定は未確認です。</div>':r.kind==='unplaced'?'<div class="note-box warn">参加予定団体一覧には記載がありますが、配置図からワークショップの位置を特定できません。推測でブースを追加していません。</div>':'<div class="note-box">3D表示が起動していないため、ここでは移動機能を利用できません。団体の予定内容は読めます。</div>';
    if(r.id==='MOBILITY')html+='<p class="source-text">電動トライク1台。車体色、走行速度は実際と異なる場合があります。</p>';
-  if(r.id!=='GYM')html+='<div class="section-label">'+(r.category==='P'?'参加予定内容':'内容')+'</div><div class="detail-content">'+esc(r.detail)+'</div>';
+  const description=data.exhibitorDescriptions?.[id];
+  if(r.id!=='GYM')html+='<div class="section-label">'+(r.category==='P'?'参加予定内容':'内容')+'</div><div class="detail-content">'+esc(description?r.detail+'\n\n'+description:r.detail)+'</div>';
   if(r.category==='F'||r.category==='S')html+='<div class="note-box">3Dで置かれている商品は実物や販売数量を示すものではありません。</div>';
    if(r.id==='GYM'||r.category==='P'||r.id==='T-SCI'){html+='<div class="section-label">体育館内 開始予定</div>'+data.schedule.map(s=>'<div class="schedule-row"><b>'+esc(s.time)+'</b><span>'+esc(s.name)+'</span></div>').join('');html+='<p class="source-text">進行上の都合で開始・終了時刻は変更になることがあります。</p>';}
   html+='<p class="source-text">'+esc(data.notice)+'</p>';
@@ -63,7 +221,7 @@
  function showSettings(){showSheet('表示と操作の設定','settings');$('sheetBody').innerHTML='<div class="setting-row"><label for="quality">描画品質</label><select id="quality"><option value="high">高画質 — PC向け</option><option value="standard">標準 — 軽さと品質のバランス</option><option value="low">軽量 — 小さな端末向け</option></select><small>影の解像度と描画解像度を変更します。重い場合は「標準」「軽量」を選択。</small></div><div class="setting-row"><label for="crowd">来場者の表示量 <span id="crowdValue"></span></label><input id="crowd" type="range" min="0" max="100" step="10" value="'+state.crowd+'"><small>人数は演出です。実際の来場者数や混雑予測ではありません。</small></div><div class="setting-row"><label for="light">光の雰囲気</label><select id="light"><option value="day">昼の光</option><option value="afternoon">午後の光</option></select><small>当日の天気・太陽位置を再現したものではありません。</small></div><label class="toggle-row" for="labelsToggle">近くのブース名を表示<input type="checkbox" id="labelsToggle" '+(state.labels?'checked':'')+'></label><label class="toggle-row" for="roofToggle">体育館の屋根を表示<input type="checkbox" id="roofToggle" '+(state.showRoof?'checked':'')+'></label><div class="note-box">屋根を外すと、上空から体育館の中を確認できます。歩行時には屋根の表示に関係なく出入口から入ります。</div><button class="secondary" id="fullscreenBtn">全画面表示を切り替える</button><button class="text-btn" id="captureBtn">いまの3D画面を画像として保存 '+icon('arrow')+'</button><div class="section-label">動作情報</div><p class="source-text" id="performanceInfo"></p><button id="settingsHelp" class="text-btn">操作方法・資料と再現範囲 '+icon('help')+'</button>';
   $('quality').value=state.quality;$('quality').onchange=e=>{state.quality=e.target.value;renderer.setQuality(state.quality);toast('描画品質を変更しました');};$('crowdValue').textContent=state.crowd+'%';$('crowd').oninput=e=>{state.crowd=Number(e.target.value);world.setCrowd(state.crowd);$('crowdValue').textContent=state.crowd+'%';};$('light').value=state.light;$('light').onchange=e=>{state.light=e.target.value;renderer.sun=FestaGL.V.norm(state.light==='day'?[-.38,.79,.48]:[-.75,.38,.46]);renderer.sunColor=state.light==='day'?[1,.94,.81]:[1,.84,.65];renderer.sunPower=state.light==='day'?3.7:3.4;renderer.exposure=state.light==='day'?1.12:1.18;renderer.createShadow();};$('labelsToggle').onchange=e=>state.labels=e.target.checked;$('roofToggle').onchange=e=>{state.showRoof=e.target.checked;world.meshes.roof.visible=state.showRoof;renderer.shadowDirty=true;};$('fullscreenBtn').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch(e){toast('この表示環境では全画面表示を利用できません。');}};$('captureBtn').onclick=()=>{try{renderer.render(animTime);let a=document.createElement('a');a.href=$('scene').toDataURL('image/png');a.download='festa2026_3d_view.png';a.click();}catch(e){toast('画像の保存に対応していない表示環境です。');}};$('settingsHelp').onclick=()=>showHelp();$('performanceInfo').textContent='WebGL 2 ／ 外部通信なし ／ '+renderer.stats.triangles.toLocaleString()+' triangles ／ '+renderer.stats.draws+' draw calls（現在の場面）';
  }
- function showHelp(){showSheet('操作と、資料について','help');$('sheetBody').innerHTML='<div class="help-section"><h3>PCで歩く</h3>'+[['左下の丸いパッド','前後・左右に移動'],['W / A / S / D・矢印キー','前後・左右に移動'],['画面をドラッグ','見回す'],['画面下の「歩く」「走る」','速度を切り替える'],['Shift ＋移動','押している間だけ走る'],['E','近くのブースの内容'],['V','上空／歩行を切り替え'],['M','会場マップ'],['Esc','閉じる・移動を止める']].map(a=>'<div class="control-row"><span>'+esc(a[0])+'</span><span>'+esc(a[1])+'</span></div>').join('')+'<h3>スマートフォン・タブレット</h3><p>左下の丸いパッドで移動します。中心付近では細かく、外側では速く移動できます。画面の右側をドラッグして見回します。看板の札や「内容を見る」をタップすると、団体名と内容が読めます。端末を横向きにすると広く見渡せます。</p><h3>ブースを探す・案内を使う</h3><p>「ブース」から団体名や食べもの、体験などで検索できます。「歩いて案内」は経路を表示して自動で歩きます。移動キーやジョイスティックを使うと手動操作に戻ります。「この場所へ移動」は、そのブースの前へ直接移動します。</p><p>上空表示ではドラッグで回転、ホイール／2本指で拡大・縮小。会場マップでは点を選ぶとブース情報、歩ける場所を選ぶと直接移動します。ブース番号入り配置図と上空表示でも歩ける場所へ直接移動できます。</p><h3>読み取り方</h3>'+data.caveats.map(s=>'<p>'+esc(s)+'</p>').join('')+'<div class="note-box">校舎は外観のみ。体育館には出入口から入れます。壇上舞台は使用しません。</div><h3>参照資料</h3>'+data.sources.map(s=>'<div class="source-entry"><strong>'+esc(s.type)+' · '+(s.url?'<a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(s.name)+'</a>':esc(s.name))+'</strong><p>'+esc(s.description)+'</p></div>').join('')+'<h3>このアプリについて</h3><p>すべての描画・検索・経路計算は、このHTMLを開いた端末内で行います。外部通信、位置情報の取得、アクセス解析、アカウント登録はありません。「かまにゃん」の紹介ページを開く場合だけ外部に移動します。</p><p>描画にはThree.jsを使用し、形状、人物、看板は本アプリ向けに実装。地表テクスチャはCC0画像を使用しています。写真測量や現地撮影による3Dモデルではありません。</p><p class="source-text">テクスチャ：Gravel04 / CC0Textures、Grass 01 / linolafett（CC0、scikit-image同梱）。提供資料の権利は元の権利者に帰属します。</p></div>';}
+ function showHelp(){showSheet('操作と、資料について','help');$('sheetBody').innerHTML='<div class="help-section"><h3>PCで歩く</h3>'+[['左下の丸いパッド','前後・左右に移動'],['W / A / S / D・矢印キー','前後・左右に移動'],['画面をドラッグ','見回す'],['画面下の「歩く」「走る」','速度を切り替える'],['Shift ＋移動','押している間だけ走る'],['E','近くのブースの内容'],['V','上空／歩行を切り替え'],['M','会場マップ'],['Esc','閉じる・移動を止める']].map(a=>'<div class="control-row"><span>'+esc(a[0])+'</span><span>'+esc(a[1])+'</span></div>').join('')+'<h3>スマートフォン・タブレット</h3><p>左下の丸いパッドで移動します。中心付近では細かく、外側では速く移動できます。画面の右側をドラッグして見回します。ブースの札、テントやキッチンカーの看板、店頭の立て看板や「内容を見る」を押すと、詳細を表示します。端末を横向きにすると広く見渡せます。</p><h3>ブースを探す・案内を使う</h3><p>「ブース」から団体名や食べもの、体験などで検索できます。「歩いて案内」は経路を表示して自動で歩きます。移動キーやジョイスティックを使うと手動操作に戻ります。「この場所へ移動」は、そのブースの前へ直接移動します。</p><p>「自動ツアー」は賑わいゾーンから出発し、徒歩とトゥクトゥクで会場を繰り返し回ります。「ツアーを停止」または Esc で終了できます。</p><p>上空表示ではドラッグで回転、ホイール／2本指で拡大・縮小。会場マップでは点を選ぶとブース情報、歩ける場所を選ぶと直接移動します。ブース番号入り配置図と上空表示でも歩ける場所へ直接移動できます。</p><h3>読み取り方</h3>'+data.caveats.map(s=>'<p>'+esc(s)+'</p>').join('')+'<div class="note-box">校舎は外観のみ。体育館には出入口から入れます。壇上舞台は使用しません。</div><h3>参照資料</h3>'+data.sources.map(s=>'<div class="source-entry"><strong>'+esc(s.type)+' · '+(s.url?'<a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(s.name)+'</a>':esc(s.name))+'</strong><p>'+esc(s.description)+'</p></div>').join('')+'<h3>このアプリについて</h3><p>すべての描画・検索・経路計算は、このHTMLを開いた端末内で行います。外部通信、位置情報の取得、アクセス解析、アカウント登録はありません。「かまにゃん」の紹介ページを開く場合だけ外部に移動します。</p><p>描画にはThree.jsを使用し、形状、人物、看板は本アプリ向けに実装。地表テクスチャはCC0画像を使用しています。写真測量や現地撮影による3Dモデルではありません。</p><p class="source-text">テクスチャ：Gravel04 / CC0Textures、Grass 01 / linolafett（CC0、scikit-image同梱）。提供資料の権利は元の権利者に帰属します。</p></div>';}
  // Canvas maps use the same coordinates and obstacles as the 3D scene.
  function mapTransform(canvas){let w=canvas.clientWidth,h=canvas.clientHeight,xs=world.campus.map(([x])=>x),zs=world.campus.map(([,z])=>z),minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs),cx=(minX+maxX)/2,cz=(minZ+maxZ)/2,scale=Math.min((w-18)/(maxX-minX),(h-18)/(maxZ-minZ));return {w,h,scale,to:(q)=>[w/2+(q[0]-cx)*scale,h/2+(q[1]-cz)*scale],from:(x,y)=>[(x-w/2)/scale+cx,(y-h/2)/scale+cz]};}
  function drawMap(canvas,big=false){if(!world||!canvas.clientWidth)return;let t=mapTransform(canvas),dpr=Math.min(devicePixelRatio,2),width=Math.round(t.w*dpr),height=Math.round(t.h*dpr);if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}let c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,t.w,t.h);c.fillStyle='#eeeee3';c.fillRect(0,0,t.w,t.h);let path=(poly,fill,stroke)=>{c.beginPath();poly.forEach((q,i)=>{let [x,y]=t.to(q);i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=1;c.stroke();}};path(world.campus,'#d4d8cd','#b4c3b5');path(world.field,'#e6d8ba');path(world.restricted,'#ded5c1','#b5a68a');c.beginPath();world.track.forEach((q,i)=>{let [x,y]=t.to(q);i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.strokeStyle='#c09164';c.lineWidth=Math.max(1,t.scale*2);c.stroke();
@@ -74,9 +232,9 @@
   if(state.path){c.beginPath();state.path.forEach((q,i)=>{let [x,y]=t.to(q);i?c.lineTo(x,y):c.moveTo(x,y);});c.strokeStyle='#af7b29';c.lineWidth=big?2:1.5;c.setLineDash([4,2]);c.stroke();c.setLineDash([]);}
   let [x,y]=t.to(state.pos);c.save();c.translate(x,y);c.rotate(state.yaw);c.fillStyle='#fff';c.beginPath();c.arc(0,0,big?7:5,0,Math.PI*2);c.fill();c.fillStyle='#174f58';c.beginPath();c.moveTo(0,big?-10:-7);c.lineTo(big?5:4,big?6:4);c.lineTo(0,big?3:1);c.lineTo(big?-5:-4,big?6:4);c.closePath();c.fill();c.restore();c.fillStyle='#526b5d';c.textAlign='right';c.font=(big?'10':'8')+'px sans-serif';if(big){let [gx,gy]=t.to(byId.GATE_MAIN.pos);c.textAlign='right';c.fillText('正門',gx-9,gy-9);let [wx,wy]=t.to(byId.GATE_WEST.pos);c.textAlign='left';c.fillText('西ヶ谷門',wx-10,wy+15);}}
  let original=false;
- function showMap(){if(!ready)return;keysClear();closeSheet();focusBefore=document.activeElement;$('mapModal').classList.remove('hidden');original=false;$('bigmap').classList.remove('hidden');$('originalWrap').classList.add('hidden');$('mapToggle').textContent='ブース番号入り配置図を見る';$('mapExplain').textContent='ブースの点を押すと内容を表示。歩ける場所を押すと、その場所へ直接移動します。';requestAnimationFrame(()=>drawMap($('bigmap'),true));$('mapClose').focus();}
+ function showMap(){if(!ready)return;pauseTour();keysClear();closeSheet();focusBefore=document.activeElement;$('mapModal').classList.remove('hidden');original=false;$('bigmap').classList.remove('hidden');$('originalWrap').classList.add('hidden');$('mapToggle').textContent='ブース番号入り配置図を見る';$('mapExplain').textContent='ブースの点を押すと内容を表示。歩ける場所を押すと、その場所へ直接移動します。';requestAnimationFrame(()=>drawMap($('bigmap'),true));$('mapClose').focus();}
  function closeMap(){$('mapModal').classList.add('hidden');}
- function jumpTo(q){if(!q||!world.isWalkable(q[0],q[1],.32)){toast('建物・走行路の中は選べません。歩ける場所を選択してください。');return false;}stopRoute();if(state.mode==='welcome')hideWelcome();state.mode='walk';state.returnPos=null;state.pitch=0;setPosition(q);closeMap();updateMode();toast('選んだ場所へ移動しました');return true;}
+ function jumpTo(q){if(!q||!world.isWalkable(q[0],q[1],.32)){toast('建物・走行路の中は選べません。歩ける場所を選択してください。');return false;}pauseTour();stopRoute();if(state.mode==='welcome')hideWelcome();state.mode='walk';state.returnPos=null;state.pitch=0;setPosition(q);closeMap();updateMode();toast('選んだ場所へ移動しました');return true;}
  function mapClick(e){let rect=$('bigmap').getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top,t=mapTransform($('bigmap'));let nearest=null,best=16;for(let r of world.markers){let pt=t.to(r.pos),d=Math.hypot(pt[0]-x,pt[1]-y);if(d<best){best=d;nearest=r;}}if(nearest){closeMap();showDetail(nearest.id);return;}let q=t.from(x,y);if(!world.isWalkable(...q,.32)){toast('建物・走行路の中は選べません。歩ける場所を選択してください。');return;}jumpTo(q);}
  function originalClick(e){let img=$('originalPlan'),rect=img.getBoundingClientRect();if(!img.naturalWidth||!rect.width||!rect.height)return;let x=(e.clientX-rect.left)/rect.width*660-35,z=(e.clientY-rect.top)/rect.height*870-35;let q=world.p(x,z);let nearest=null,best=16;for(let r of world.markers){let px=rect.left+(r.pos[0]/.22+320+35)/660*rect.width,py=rect.top+(r.pos[1]/.22+290+35)/870*rect.height,d=Math.hypot(px-e.clientX,py-e.clientY);if(d<best){best=d;nearest=r;}}if(nearest){closeMap();showDetail(nearest.id);return;}jumpTo(q);}
  function trackMapDrag(el,action){let pointers=new Map(),skip=false;el.addEventListener('pointerdown',e=>{if(!pointers.size)skip=false;else skip=true;pointers.set(e.pointerId,[e.clientX,e.clientY]);});el.addEventListener('pointermove',e=>{let start=pointers.get(e.pointerId);if(start&&Math.hypot(e.clientX-start[0],e.clientY-start[1])>8)skip=true;});el.addEventListener('pointerup',e=>pointers.delete(e.pointerId));el.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);skip=true;});el.addEventListener('click',e=>{if(!skip)action(e);});}
@@ -103,7 +261,7 @@
    if(!isOverview){let blocked=false,eye=renderer.camera.eye;for(let b of world.buildings){if(b.gym){let inside=eye[0]>b.x-b.w/2&&eye[0]<b.x+b.w/2&&eye[2]>b.z-b.d/2&&eye[2]<b.z+b.d/2;let markerInside=r.marker[0]>b.x-b.w/2&&r.marker[0]<b.x+b.w/2&&r.marker[2]>b.z-b.d/2&&r.marker[2]<b.z+b.d/2;if(inside!==markerInside&&d>6)blocked=true;continue;}for(let f=.1;f<.96;f+=.09){let x=eye[0]+(r.marker[0]-eye[0])*f,z=eye[2]+(r.marker[2]-eye[2])*f,y=eye[1]+(r.marker[1]-eye[1])*f;if(Math.abs(x-b.x)<b.w/2&&Math.abs(z-b.z)<b.d/2&&y<b.h){blocked=true;break;}}if(blocked)break;}if(blocked)continue;}
    candidates.push({r,el,pr,d});}
   candidates.sort((a,b)=>a.d-b.d);let placed=[];for(let a of candidates){if(placed.length>=(isOverview?20:mobile?4:7))break;let width=Math.min(mobile?160:220,45+a.r.short.length*10);if(placed.some(b=>Math.abs(b.pr.x-a.pr.x)<(b.width+width)/2+7&&Math.abs(b.pr.y-a.pr.y)<34))continue;a.width=width;a.el.style.left=a.pr.x+'px';a.el.style.top=a.pr.y+'px';a.el.classList.remove('hidden');placed.push(a);}}
- function showMascot(){showSheet('かまにゃん','mascot');$('sheetBody').innerHTML='<h3 class="detail-title">かまにゃん</h3><p class="detail-caption">鎌倉地域メディア「かまくらいふ」のキャラクターです。</p><div class="note-box">しらすの首輪に大仏のポシェットをつけています</div><p class="source-text">'+esc(data.notice)+'</p><p class="source-text"><a href="https://kamakura-life.net/mascot/" target="_blank" rel="noopener noreferrer">かまくらいふの紹介ページ</a></p>';}
+ function showMascot(){const description=data.exhibitorDescriptions?.['かまにゃん'];showSheet('かまにゃん','mascot');$('sheetBody').innerHTML='<h3 class="detail-title">かまにゃん</h3><p class="detail-caption">鎌倉地域メディア「かまくらいふ」のキャラクターです。</p><div class="note-box">しらすの首輪に大仏のポシェットをつけています</div>'+(description?'<div class="detail-content">'+esc(description)+'</div>':'')+'<p class="source-text">'+esc(data.notice)+'</p><p class="source-text"><a href="https://kamakura-life.net/mascot/" target="_blank" rel="noopener noreferrer">かまくらいふの紹介ページ</a></p>';}
  function makeMascotLabel(){let b=document.createElement('button');b.id='kamanyanLabel';b.className='world-label hidden';b.style.setProperty('--accent','#a97887');b.setAttribute('aria-label','かまくらいふ かまにゃんの内容を見る');b.innerHTML='<span>かまくらいふ　かまにゃん</span>';b.onclick=e=>{e.stopPropagation();showMascot();};$('labels').appendChild(b);}
  function updateMascotLabel(){let el=$('kamanyanLabel');if(!el)return;el.classList.add('hidden');if(!state.labels||state.mode==='welcome'||state.mode==='ride'||state.sheet||!$('mapModal').classList.contains('hidden'))return;let anchor=world.getKamanyan(),d=Math.hypot(renderer.camera.eye[0]-anchor[0],renderer.camera.eye[2]-anchor[2]);if(state.mode!=='overview'&&d>28)return;let pr=renderer.project(anchor);if(!pr||pr.z>1||pr.x<80||pr.x>innerWidth-80||pr.y<110||pr.y>innerHeight-80)return;el.style.left=pr.x+'px';el.style.top=pr.y+'px';el.classList.remove('hidden');}
  function updateNearest(){if(!ready)return;let near=null,best=4.8;if(state.mode==='walk'){for(let r of world.markers){if(!r.approach)continue;let d=Math.hypot(state.pos[0]-r.approach[0],state.pos[1]-r.approach[1]);if(d<best){best=d;near=r;}}}state.nearest=near?.id||null;let show=near&&!state.sheet&&state.mode==='walk';$('nearby').classList.toggle('hidden',!show);if(show){$('nearCategory').textContent=near.id.includes('-')?near.id:near.id==='WC'?'WC':'案内';$('nearCategory').style.background=colors[near.category];$('nearCaption').textContent=categoryName(near);$('nearName').textContent=near.short;}
@@ -111,26 +269,41 @@
  // Pointer drag for look, with pinch zoom only in overview mode.
  const pointers=new Map();let pinchDist=0;
  $('scene').addEventListener('pointerdown',e=>{if(!ready||state.sheet||state.mode==='welcome')return;pointers.set(e.pointerId,[e.clientX,e.clientY]);if(pointers.size===2){drag.multi=true;let a=[...pointers.values()];pinchDist=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);}drag.active=true;drag.pid=e.pointerId;drag.x=e.clientX;drag.y=e.clientY;drag.moved=0;drag.multi=pointers.size>1;$('scene').setPointerCapture(e.pointerId);});
- $('scene').addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,[e.clientX,e.clientY]);if(pointers.size===2&&state.mode==='overview'){let a=[...pointers.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);state.orbitDist=FestaGL.clamp(state.orbitDist*pinchDist/Math.max(1,d),25,190);pinchDist=d;return;}if(!drag.active||drag.pid!==e.pointerId)return;let dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);if(state.mode==='overview'){state.orbitYaw-=dx*.004;state.orbitPitch=FestaGL.clamp(state.orbitPitch+dy*.003,.18,1.48);}else{if(state.mode==='ride')state.rideYaw+=dx*.004;else state.yaw-=dx*.004;state.pitch=FestaGL.clamp(state.pitch+dy*.0035,-1.15,1.15);}});
- function pointerEnd(e){let select=e.type==='pointerup'&&state.mode==='overview'&&drag.pid===e.pointerId&&pointers.size===1&&!drag.multi&&drag.moved<=8;pointers.delete(e.pointerId);if(drag.pid===e.pointerId)drag.active=false;if(select){let rect=$('scene').getBoundingClientRect(),point=renderer.groundPoint(e.clientX-rect.left,e.clientY-rect.top);if(point)jumpTo([point[0],point[2]]);}}$('scene').addEventListener('pointerup',pointerEnd);$('scene').addEventListener('pointercancel',pointerEnd);$('scene').addEventListener('contextmenu',e=>e.preventDefault());$('scene').addEventListener('wheel',e=>{if(state.mode!=='overview')return;e.preventDefault();state.orbitDist=FestaGL.clamp(state.orbitDist*Math.exp(e.deltaY*.001),25,190);},{passive:false});
- $('joystick').addEventListener('pointerdown',e=>{e.preventDefault();joy.pid=e.pointerId;joy.active=true;$('joystick').setPointerCapture(e.pointerId);updateJoy(e);if(state.auto){state.auto=false;updateMode();}});
+ $('scene').addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,[e.clientX,e.clientY]);if(pointers.size===2&&state.mode==='overview'){let a=[...pointers.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);state.orbitDist=FestaGL.clamp(state.orbitDist*pinchDist/Math.max(1,d),25,190);pinchDist=d;return;}if(!drag.active||drag.pid!==e.pointerId)return;let dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);if(state.tour&&!state.tour.paused){if(drag.moved<=8)return;pauseTour();}if(state.mode==='overview'){state.orbitYaw-=dx*.004;state.orbitPitch=FestaGL.clamp(state.orbitPitch+dy*.003,.18,1.48);}else{if(state.mode==='ride')state.rideYaw+=dx*.004;else state.yaw-=dx*.004;state.pitch=FestaGL.clamp(state.pitch+dy*.0035,-1.15,1.15);}});
+ function pointerEnd(e){
+  const select=e.type==='pointerup'&&drag.pid===e.pointerId&&pointers.size===1&&!drag.multi&&drag.moved<=8;
+  pointers.delete(e.pointerId);
+  if(drag.pid===e.pointerId)drag.active=false;
+  if(!select||state.mode==='welcome')return;
+  const rect=$('scene').getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
+  const {signs,base,details,roof}=world.meshes;
+  const face=renderer.signFace(x,y,signs,[base,details,roof]);
+  const sign=face==null?null:world.selectableSigns.find(({first,last})=>face>=first&&face<last);
+  if(sign){showDetail(sign.id);return;}
+  if(state.mode==='overview'){
+   const point=renderer.groundPoint(x,y);
+   if(point)jumpTo([point[0],point[2]]);
+  }
+ }$('scene').addEventListener('pointerup',pointerEnd);$('scene').addEventListener('pointercancel',pointerEnd);$('scene').addEventListener('contextmenu',e=>e.preventDefault());$('scene').addEventListener('wheel',e=>{if(state.mode!=='overview')return;e.preventDefault();state.orbitDist=FestaGL.clamp(state.orbitDist*Math.exp(e.deltaY*.001),25,190);},{passive:false});
+ $('joystick').addEventListener('pointerdown',e=>{e.preventDefault();pauseTour();joy.pid=e.pointerId;joy.active=true;$('joystick').setPointerCapture(e.pointerId);updateJoy(e);if(state.auto){state.auto=false;updateMode();}});
  $('joystick').addEventListener('pointermove',e=>{if(joy.pid===e.pointerId)updateJoy(e);});function updateJoy(e){let rect=$('joystick').getBoundingClientRect(),dx=e.clientX-(rect.left+rect.width/2),dy=e.clientY-(rect.top+rect.height/2),l=Math.hypot(dx,dy),max=37;if(l>max){dx*=max/l;dy*=max/l;}joy.x=dx/max;joy.y=-dy/max;$('joyKnob').style.transform='translate('+dx+'px,'+dy+'px)';}
  function endJoy(){joy.x=joy.y=0;joy.active=false;joy.pid=null;$('joyKnob').style.transform='';}$('joystick').addEventListener('pointerup',endJoy);$('joystick').addEventListener('pointercancel',endJoy);
  function keysClear(){for(let k in keys)keys[k]=false;endJoy();}
  window.addEventListener('blur',keysClear);document.addEventListener('visibilitychange',()=>{keysClear();lastFrame=0;});
- document.addEventListener('keydown',e=>{if(!ready)return;let typing=/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName);if(e.code==='Escape'){e.preventDefault();if(!$('mapModal').classList.contains('hidden'))closeMap();else if(state.sheet)closeSheet();else exitMode();return;}if(e.code==='Tab'&&(state.sheet||!$('mapModal').classList.contains('hidden'))){let root=state.sheet?$('sheet'):$('mapModal'),items=[...root.querySelectorAll('button,a,input,select')].filter(x=>!x.closest('.hidden')&&!x.disabled);if(items.length){let first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){last.focus();e.preventDefault();}else if(!e.shiftKey&&document.activeElement===last){first.focus();e.preventDefault();}}return;}if(typing||state.sheet||!$('mapModal').classList.contains('hidden'))return;if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();keys[e.code]=true;if(state.auto){state.auto=false;updateMode();}}if(e.repeat)return;if(e.code==='KeyE'&&state.nearest)showDetail(state.nearest);if(e.code==='KeyV')toOverview();if(e.code==='KeyM')showMap();if(e.code==='KeyF')showSearch();});document.addEventListener('keyup',e=>keys[e.code]=false);
- function tick(dt){if(!ready||state.paused)return;world.update(animTime,dt);if(state.mode==='walk'&&!state.sheet&&$('mapModal').classList.contains('hidden')){let forward=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+joy.y,right=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x,l=Math.hypot(forward,right);if(l>.03){if(l>1){forward/=l;right/=l;}let keyMoving=keys.KeyW||keys.ArrowUp||keys.KeyS||keys.ArrowDown||keys.KeyD||keys.ArrowRight||keys.KeyA||keys.ArrowLeft;let speed=keyMoving?(state.runMode||keys.ShiftLeft||keys.ShiftRight?4.6:3.0):(2.3+2.3*Math.min(l,1));move((Math.sin(state.yaw)*forward+Math.cos(state.yaw)*right)*speed*dt,(-Math.cos(state.yaw)*forward+Math.sin(state.yaw)*right)*speed*dt);}else autoMove(dt);
+ document.addEventListener('keydown',e=>{if(!ready)return;let typing=/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName);if(e.code==='Escape'){e.preventDefault();if(!$('mapModal').classList.contains('hidden'))closeMap();else if(state.sheet)closeSheet();else if(state.tour&&!state.tour.paused)pauseTour();else if(!tourControls())exitMode();return;}if(e.code==='Tab'&&(state.sheet||!$('mapModal').classList.contains('hidden'))){let root=state.sheet?$('sheet'):$('mapModal'),items=[...root.querySelectorAll('button,a,input,select')].filter(x=>!x.closest('.hidden')&&!x.disabled);if(items.length){let first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){last.focus();e.preventDefault();}else if(!e.shiftKey&&document.activeElement===last){first.focus();e.preventDefault();}}return;}if(typing||state.sheet||!$('mapModal').classList.contains('hidden'))return;if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();pauseTour();keys[e.code]=true;if(state.auto){state.auto=false;updateMode();}}if(e.repeat)return;if(e.code==='KeyE'&&state.nearest)showDetail(state.nearest);if(e.code==='KeyV')toOverview();if(e.code==='KeyM')showMap();if(e.code==='KeyF')showSearch();});document.addEventListener('keyup',e=>keys[e.code]=false);
+ function tick(dt){if(!ready||state.paused)return;const tour=state.tour;world.update(animTime,dt,tourRidePaused()?tour.paused.carDistance:undefined);if(tour&&!tour.paused)tickTour(dt);else if(state.mode==='walk'&&!state.sheet&&$('mapModal').classList.contains('hidden')){let forward=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+joy.y,right=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x,l=Math.hypot(forward,right);if(l>.03){if(l>1){forward/=l;right/=l;}let keyMoving=keys.KeyW||keys.ArrowUp||keys.KeyS||keys.ArrowDown||keys.KeyD||keys.ArrowRight||keys.KeyA||keys.ArrowLeft;let speed=keyMoving?(state.runMode||keys.ShiftLeft||keys.ShiftRight?4.6:3.0):(2.3+2.3*Math.min(l,1));move((Math.sin(state.yaw)*forward+Math.cos(state.yaw)*right)*speed*dt,(-Math.cos(state.yaw)*forward+Math.sin(state.yaw)*right)*speed*dt);}else autoMove(dt);
   }
   let eye,target;if(state.mode==='overview'){let t=state.orbitTarget,d=state.orbitDist,cp=Math.cos(state.orbitPitch);eye=[t[0]+Math.sin(state.orbitYaw)*d*cp,Math.sin(state.orbitPitch)*d,t[2]+Math.cos(state.orbitYaw)*d*cp];target=[...t];}
   else if(state.mode==='welcome'){let sway=reduced?0:Math.sin(animTime*.085)*.8;eye=[2.2+sway,2.2,11.5];target=[15+sway,2.0,-13];}
   else if(state.mode==='ride'){let car=world.getCar();let seatZ=-.23;eye=[car.x+Math.sin(car.yaw)*seatZ,1.68,car.z+Math.cos(car.yaw)*seatZ];let yaw=car.yaw+state.rideYaw;target=[eye[0]+Math.sin(yaw)*Math.cos(state.pitch),eye[1]+Math.sin(state.pitch),eye[2]+Math.cos(yaw)*Math.cos(state.pitch)];state.pos=[car.x,car.z];}
-  else{let moving=Math.abs(joy.x)+Math.abs(joy.y)||keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||state.auto;let bob=moving&&!reduced?Math.sin(state.distanceWalked*8)*.017:0;eye=[state.pos[0],1.68+world.walkHeight(state.pos[0],state.pos[1])+bob,state.pos[1]];target=[eye[0]+Math.sin(state.yaw)*Math.cos(state.pitch),eye[1]+Math.sin(state.pitch),eye[2]-Math.cos(state.yaw)*Math.cos(state.pitch)];}renderer.camera.near=state.mode==='overview'?1.0:.09;renderer.camera.eye=eye;renderer.camera.target=target;
+  else{let moving=Math.abs(joy.x)+Math.abs(joy.y)||keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||state.auto||(tour&&!tour.paused&&tour.step.kind==='walk');let bob=moving&&!reduced?Math.sin(state.distanceWalked*8)*.017:0;eye=[state.pos[0],1.68+world.walkHeight(state.pos[0],state.pos[1])+bob,state.pos[1]];target=[eye[0]+Math.sin(state.yaw)*Math.cos(state.pitch),eye[1]+Math.sin(state.pitch),eye[2]-Math.cos(state.yaw)*Math.cos(state.pitch)];}renderer.camera.near=state.mode==='overview'?1.0:.09;renderer.camera.eye=eye;renderer.camera.target=target;
  }
- function frame(ms){if(!ready)return;if(state.testFreeze){requestAnimationFrame(frame);return;}let dt=lastFrame?Math.min(.12,(ms-lastFrame)/1000):.016;lastFrame=ms;if(!document.hidden){if(!state.paused)animTime+=dt;tick(dt);renderer.render(animTime);updateRideBubble();uiTimer+=dt;if(uiTimer>.13){uiTimer=0;updateLabels();updateMascotLabel();updateNearest();drawMap($('minimap'));if(!$('mapModal').classList.contains('hidden')&&!original)drawMap($('bigmap'),true);}}requestAnimationFrame(frame);}
+ function advance(dt){if(!state.paused)animTime+=dt;tick(dt);}
+ function frame(ms){if(!ready)return;if(state.testFreeze){requestAnimationFrame(frame);return;}let dt=lastFrame?Math.min(.12,(ms-lastFrame)/1000):.016;lastFrame=ms;if(!document.hidden){advance(dt);renderer.render(animTime);updateRideBubble();uiTimer+=dt;if(uiTimer>.13){uiTimer=0;updateLabels();updateMascotLabel();updateNearest();drawMap($('minimap'));if(!$('mapModal').classList.contains('hidden')&&!original)drawMap($('bigmap'),true);}}requestAnimationFrame(frame);}
  // UI wiring, available without any browser permission prompt.
- rideButtons.forEach((button,i)=>button.onclick=e=>{e.stopPropagation();ride(world.boardingGaps[i]);});$('homeBtn').onclick=showWelcome;$('startBtn').onclick=()=>start('field');$('startMain').onclick=()=>start('GATE_MAIN');$('startWest').onclick=()=>start('GATE_WEST');$('welcomeOverview').onclick=toOverview;$('searchBtn').onclick=showSearch;$('overviewBtn').onclick=toOverview;$('settingsBtn').onclick=showSettings;$('helpBtn').onclick=showHelp;$('sheetClose').onclick=closeSheet;$('sheetScrim').onclick=closeSheet;$('sheetBack').onclick=showSearch;$('nearOpen').onclick=()=>state.nearest&&showDetail(state.nearest);$('mapBtn').onclick=showMap;$('mapClose').onclick=closeMap;trackMapDrag($('bigmap'),mapClick);trackMapDrag($('originalPlan'),originalClick);$('speedToggle').onclick=()=>{state.runMode=!state.runMode;updateMode();};$('modeExit').onclick=exitMode;$('modeAction').onclick=()=>{if(state.mode==='overview'||state.mode==='ride')exitMode();else if(state.path){state.auto=!state.auto;updateMode();}};$('mapToggle').onclick=()=>{original=!original;$('bigmap').classList.toggle('hidden',original);$('originalWrap').classList.toggle('hidden',!original);$('mapToggle').textContent=original?'会場マップに戻る':'ブース番号入り配置図を見る';$('mapExplain').textContent=original?'ブース番号を押すと内容を表示。歩ける場所を押すと、その場所へ直接移動します。':'ブースの点を押すと内容を表示。歩ける場所を押すと、その場所へ直接移動します。';if(!original)drawMap($('bigmap'),true);};$('mapModal').onclick=e=>{if(e.target===$('mapModal'))closeMap();};$('originalPlan').src='./assets/venue-map.svg?v=20261104.3';
+ rideButtons.forEach((button,i)=>button.onclick=e=>{e.stopPropagation();ride(world.boardingGaps[i]);});$('homeBtn').onclick=showWelcome;$('startBtn').onclick=()=>start('field');$('welcomeTour').onclick=startTour;$('tourBtn').onclick=startTour;$('startMain').onclick=()=>start('GATE_MAIN');$('startWest').onclick=()=>start('GATE_WEST');$('welcomeOverview').onclick=toOverview;$('searchBtn').onclick=showSearch;$('overviewBtn').onclick=toOverview;$('settingsBtn').onclick=showSettings;$('helpBtn').onclick=showHelp;$('sheetClose').onclick=closeSheet;$('sheetScrim').onclick=closeSheet;$('sheetBack').onclick=showSearch;$('nearOpen').onclick=()=>state.nearest&&showDetail(state.nearest);$('mapBtn').onclick=showMap;$('mapClose').onclick=closeMap;trackMapDrag($('bigmap'),mapClick);trackMapDrag($('originalPlan'),originalClick);$('speedToggle').onclick=()=>{state.runMode=!state.runMode;updateMode();};$('modeExit').onclick=exitMode;$('modeAction').onclick=()=>{if(tourControls())startTour();else if(state.mode==='overview'||state.mode==='ride')exitMode();else if(state.path){state.auto=!state.auto;updateMode();}};$('mapToggle').onclick=()=>{original=!original;$('bigmap').classList.toggle('hidden',original);$('originalWrap').classList.toggle('hidden',!original);$('mapToggle').textContent=original?'会場マップに戻る':'ブース番号入り配置図を見る';$('mapExplain').textContent=original?'ブース番号を押すと内容を表示。歩ける場所を押すと、その場所へ直接移動します。':'ブースの点を押すと内容を表示。歩ける場所を押すと、その場所へ直接移動します。';if(!original)drawMap($('bigmap'),true);};$('mapModal').onclick=e=>{if(e.target===$('mapModal'))closeMap();};$('originalPlan').src='./assets/venue-map.svg?v=20261121.1';
  window.addEventListener('resize',()=>{if(renderer)renderer.resize();if(world){drawMap($('minimap'));if(!$('mapModal').classList.contains('hidden'))drawMap($('bigmap'),true);}});
- try{await nextTask();renderer=new FestaGL.Renderer($('scene'),state.quality);world=await buildFestaWorld(renderer,progress);await nextTask();nav=new FestaNavigation(world);makeLabels();makeMascotLabel();progress(1,'会場の準備ができました');ready=true;window.__FESTA_TEST__={ready:true,renderer,world,nav,state,byId,start,teleport,routeTo,showDetail,showSearch,showSettings,showHelp,showMap,toOverview,ride,exitMode,tick,move,stopRoute,closeSheet,get animTime(){return animTime;},render:()=>{tick(.016);renderer.render(animTime);updateRideBubble();updateLabels();updateMascotLabel();updateNearest();drawMap($('minimap'));}};tick(.016);renderer.render(0);$('loading').classList.add('hidden');$('hud').classList.remove('hidden');$('welcome').classList.remove('hidden');requestAnimationFrame(frame);
+ try{await nextTask();renderer=new FestaGL.Renderer($('scene'),state.quality);world=await buildFestaWorld(renderer,progress);await nextTask();nav=new FestaNavigation(world);makeLabels();makeMascotLabel();progress(1,'会場の準備ができました');ready=true;window.__FESTA_TEST__={ready:true,renderer,world,nav,state,byId,start,teleport,routeTo,showDetail,showSearch,showSettings,showHelp,showMap,toOverview,ride,exitMode,tick,advance,move,stopRoute,closeSheet,get animTime(){return animTime;},render:()=>{tick(.016);renderer.render(animTime);updateRideBubble();updateLabels();updateMascotLabel();updateNearest();drawMap($('minimap'));}};tick(.016);renderer.render(0);$('loading').classList.add('hidden');$('hud').classList.remove('hidden');$('welcome').classList.remove('hidden');requestAnimationFrame(frame);
   $('scene').addEventListener('webglcontextlost',e=>{e.preventDefault();state.paused=true;toast('描画が停止しました。ページを再読み込みすると再開できます。',30000);});
  }catch(e){console.error(e);$('loading').innerHTML='<div class="loading-inner"><span class="eyebrow">3D表示を開始できませんでした</span><h1 style="font-size:26px">ブース情報は読めます。</h1><p>'+esc(e.message)+'</p><p>WebGL 2対応のChrome・Edge・Safariで、このHTMLをブラウザとして開くと3D表示を利用できます。端末のグラフィックアクセラレーション設定も影響します。</p><button id="fallbackList" class="primary">参加団体一覧を読む</button><button id="fallbackPlan" class="secondary" style="margin-top:10px">配置図を見る</button></div>';$('fallbackList').onclick=()=>{showSearch();$('sheet').style.zIndex=110;$('sheetScrim').style.zIndex=109;};$('fallbackPlan').onclick=()=>{let win=window.open();if(win){win.document.title='会場配置図';let im=win.document.createElement('img');im.src='./assets/venue-map.svg';im.style.maxWidth='100%';win.document.body.appendChild(im);}};window.__FESTA_TEST__={ready:false,error:e.message};}
 })();
